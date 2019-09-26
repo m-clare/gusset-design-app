@@ -110,7 +110,6 @@ def build_io_panel():
     return html.Div(id='io-panel',
              children=[
                 build_assembly_input(),
-                html.Br(),
                 mui.Divider(),
                 build_gusset_parameters(),
                 html.Br(),
@@ -142,40 +141,10 @@ def build_assembly_input():
                                     ])
                         ])
 
-
 def build_gusset_parameters():
-    return html.Div(id='gusset-parameters',
-                    className='pretty-shadowless-container',
-                    children=[
+
+    return html.Div(children=[
                         html.H4('Gusset Parameters'),
-                        html.H6('L1'),
-                        dcc.Slider(
-                            id='l1' + '-slider',
-                            min=12,
-                            max=40,
-                            step=0.5,
-                            value=24,
-                            marks=slider_marks
-                            ),
-                        html.Br(),
-                        html.Div(id='gusset-l1-value',
-                                 style={'font-variant': 'small-caps'}
-                                 ),
-                        html.Br(),
-                        html.H6('L2'),
-                        dcc.Slider(
-                            id='l2' + '-slider',
-                            min=12,
-                            max=40,
-                            step=0.5,
-                            value=24,
-                            marks=slider_marks,
-                            ),
-                        html.Br(),
-                        html.Div(id='gusset-l2-value',
-                                 style={'font-variant': 'small-caps'}),
-                        html.Br(),
-                        html.Br(),
                         daq.NumericInput(
                             label='Gusset plate thickness (inches)',
                             labelPosition='bottom',
@@ -183,30 +152,100 @@ def build_gusset_parameters():
                             min=0.5,
                             max=4,
                             style={'font-variant': 'small-caps'}
-                        )])
+                        ),
+                        html.H6('L2'),
+                        html.Div(id='gusset-l2-value',
+                            style={'font-variant': 'small-caps'}),
+                        html.Div(style={'height': '300px',
+                                        'margin': '1em'},
+                                         children=[
+                                            dcc.Slider(
+                                                id='l2' + '-slider',
+                                                min=12,
+                                                max=40,
+                                                step=0.5,
+                                                value=24,
+                                                marks=slider_marks,
+                                                vertical=True
+                                            )
+                                         ])
+                        ])
+                    
+
+                        # dfx.Row(children=[
+                            # dfx.Col(children=[
+                                # daq.NumericInput(
+                                #     label='Gusset plate thickness (inches)',
+                                #     labelPosition='bottom',
+                                #     value=1,
+                                #     min=0.5,
+                                #     max=4,
+                                #     style={'font-variant': 'small-caps'}
+                                # ),
+                                # html.H6('L2'),
+                                # html.Div(id='gusset-l2-value',
+                                #     style={'font-variant': 'small-caps'}),
+                        #         html.Div(style={'height': '300px',
+                        #                         'margin': '1em'},
+                        #                  children=[
+                        #                     dcc.Slider(
+                        #                         id='l2' + '-slider',
+                        #                         min=12,
+                        #                         max=40,
+                        #                         step=0.5,
+                        #                         value=24,
+                        #                         marks=slider_marks,
+                        #                         vertical=True
+                        #                     )
+                        #                  ]),
+                        #     ]),
+                        #     dfx.Col(children=[
+                                
+                        #         ]),
+                        # ]),
+                        # html.Br(),
+                        # html.H6('L1'),
+                        # html.Div(style={'margin': '1em'},
+                        #                  children=[
+                        #                     dcc.Slider(
+                        #                         id='l1' + '-slider',
+                        #                         min=12,
+                        #                         max=40,
+                        #                         step=0.5,
+                        #                         value=24,
+                        #                         marks=slider_marks
+                        #                     )
+                        #                  ]),
+                        # html.Div(id='gusset-l1-value',
+                        #         style={'font-variant': 'small-caps'}
+                        #     )])
 
 def build_design_checks():
     return html.Div(id='gusset-design-checks',
                     className='pretty-shadowless-container',
-                    children=create_dcr_indicators())
+                    children=[generate_dcr_indicators()])
 
 dcr_list = ['axial-tension', 'axial-compression', 'moment', 'in-plane-shear',
             'out-of-plane-shear', 'Whitmore-section']
 
-def create_dcr_indicators():
-    dcr_graduated_bars = []
-    for item in dcr_list:
-        bar = daq.GraduatedBar(
-              id=item + '-indicator',
-              color={'gradient': True, 'ranges': {'green': [0, 85], 'yellow': [85, 95], 'red': [95, 100]}},
-              showCurrentValue=True,
-              max=100,
-              value=90,
-              vertical=True,
-              step=10,
-              )
-        dcr_graduated_bars.append(bar)
-    return dcr_graduated_bars
+def generate_dcr_indicators():
+    bars = [create_dcr_indicator(item) for item in dcr_list]
+    return dfx.Row(children=bars)
+
+def create_dcr_indicator(item):
+    bar = daq.GraduatedBar(
+          id=item + '-indicator',
+          color={'gradient': True, 'ranges': {'green': [0, 85], 'yellow': [85, 95], 'red': [95, 100]}},
+          showCurrentValue=True,
+          max=100,
+          value=90,
+          vertical=True,
+          step=10,
+          )
+    styled_bar = html.Div(id=item + '-bar-container', style={'margin': '1em'},
+                          children=bar)
+    bar_div = dfx.Col(children=[styled_bar])
+    return bar_div
 
 
 def build_visualization_panel():
