@@ -1,0 +1,23 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-variant: small-caps;
+}
+
+h1 {
+    padding: 12px;
+}
+
+
+.my-container {
+    padding: 12px;
+}
+
+.custom-tabs{
+    font-variant: small-caps;
+    font-size: 3.0rem;
+    letter-spacing: -.1rem;
+}

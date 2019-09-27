@@ -9,8 +9,9 @@ from dash.dependencies import Input, Output, State
 import dash_flexbox_grid as dfx
 import plotly.graph_objs as go
 import sd_material_ui as mui
-import numpy as np
 import json
+
+from gusset_design.elements.gusset_node import GussetNode
 
 # my_gusset_node = GussetNode
 
@@ -26,7 +27,7 @@ app.config['suppress_callback_exceptions'] = True
 #  ----------------------------------------------------------------------------
 #  Components
 #  ----------------------------------------------------------------------------
-
+test = GussetNode.from_json('../gusset_design/examples/sample_node.json')
 
 def build_app_banner():
     return html.Div(
@@ -53,7 +54,7 @@ def build_main_app():
                     ]
                     ),
                 dfx.Col(xs=6, children=[
-                    dcc.Graph(figure=generate_visualization())
+                    dcc.Graph(figure=generate_visualization(test))
                     ])
                 ])
             ]
@@ -68,7 +69,8 @@ def build_tabs():
                                label=category,
                                value=category,
                                className='custom-tab',
-                               selected_className=category + '-custom-tab--selected',
+                               selected_className=category +
+                               '-custom-tab--selected',
                                children=build_tab(category))
         category_tabs.append(category_tab)
     return html.Div(
@@ -84,14 +86,16 @@ def build_tabs():
             ]
         )
 
+
 def build_tab(category):
     if category == 'Main':
         return [dfx.Grid(id=category+'-grid', fluid=True,
                          children=[
                             dfx.Row(children=[
-                                    dfx.Col(xs=6, children=[build_io_panel()]),
-                                    dfx.Col(xs=6, children=[
-                                        dcc.Graph(figure=generate_visualization())
+                                    dfx.Col(lg=6, children=[build_io_panel()]),
+                                    dfx.Col(lg=6, children=[
+                                        dcc.Graph(figure=generate_visualization(test)),
+                                        build_design_checks()
                                             ])
                                     ])
                             ])]
@@ -105,20 +109,20 @@ def build_tab(category):
                          ])]
 
 
-
 def build_io_panel():
     return html.Div(id='io-panel',
-             children=[
-                build_assembly_input(),
-                mui.Divider(),
-                build_gusset_parameters(),
-                html.Br(),
-                mui.Divider(),
-                build_design_checks(),
-             ])
+                    style={'justify-content': 'center'},
+                    children=[
+                        build_assembly_input(),
+                        mui.Divider(),
+                        build_gusset_parameters(),
+                        html.Br(),
+                        mui.Divider(),
+                        
+                    ])
 
 
-slider_marks = {12: '12', 16: '16', 20: '20', 24: '24', 28:'28',
+slider_marks = {12: '12', 16: '16', 20: '20', 24: '24', 28: '28',
                 32: '32', 36: '36', 40: '40'}
 
 
@@ -126,7 +130,7 @@ def build_assembly_input():
     return html.Div(id='assembly',
                     children=[
                         html.Div(id='load-gusset-assembly',
-                                 className='pretty-shadowless-container',
+                                 className='my-container',
                                  children=[
                                     html.H3('Assembly'),
                                     dcc.Input(
@@ -141,23 +145,27 @@ def build_assembly_input():
                                     ])
                         ])
 
-def build_gusset_parameters():
 
-    return html.Div(children=[
+def build_gusset_parameters():
+    return html.Div(className='my-container',
+                    children=[
                         html.H4('Gusset Parameters'),
-                        daq.NumericInput(
-                            label='Gusset plate thickness (inches)',
-                            labelPosition='bottom',
-                            value=1,
-                            min=0.5,
-                            max=4,
-                            style={'font-variant': 'small-caps'}
-                        ),
-                        html.H6('L2'),
-                        html.Div(id='gusset-l2-value',
-                            style={'font-variant': 'small-caps'}),
-                        html.Div(style={'height': '300px',
-                                        'margin': '1em'},
+                        dfx.Row(children=[
+                            dfx.Col(children=[
+                                html.H6('Thickness'),
+                                daq.NumericInput(
+                                    label='(inches)',
+                                    labelPosition='bottom',
+                                    value=1,
+                                    min=0.5,
+                                    max=4,
+                                    style={'font-variant': 'small-caps'}
+                                ),
+                                html.H6('L2'),
+                                html.Div(id='gusset-l2-value',
+                                         style={'font-variant': 'small-caps'}),
+                                html.Div(style={'height': '400px',
+                                                'margin': '1em'},
                                          children=[
                                             dcc.Slider(
                                                 id='l2' + '-slider',
@@ -168,74 +176,50 @@ def build_gusset_parameters():
                                                 marks=slider_marks,
                                                 vertical=True
                                             )
-                                         ])
+                                         ]),
+                            ]),
+                            dfx.Col(children=[
+                                    dcc.Graph(figure=generate_visualization(test))]
+                                    ),
+                        ]),
+                        html.Br(),
+                        html.H6('L1'),
+                        html.Div(id='gusset-l1-value',
+                                 style={'font-variant': 'small-caps'}),
+                        html.Div(style={'margin': '1em'},
+                                 children=[
+                                    dcc.Slider(
+                                        id='l1' + '-slider',
+                                        min=12,
+                                        max=40,
+                                        step=0.5,
+                                        value=24,
+                                        marks=slider_marks
+                                    )
+                                 ]),
                         ])
-                    
 
-                        # dfx.Row(children=[
-                            # dfx.Col(children=[
-                                # daq.NumericInput(
-                                #     label='Gusset plate thickness (inches)',
-                                #     labelPosition='bottom',
-                                #     value=1,
-                                #     min=0.5,
-                                #     max=4,
-                                #     style={'font-variant': 'small-caps'}
-                                # ),
-                                # html.H6('L2'),
-                                # html.Div(id='gusset-l2-value',
-                                #     style={'font-variant': 'small-caps'}),
-                        #         html.Div(style={'height': '300px',
-                        #                         'margin': '1em'},
-                        #                  children=[
-                        #                     dcc.Slider(
-                        #                         id='l2' + '-slider',
-                        #                         min=12,
-                        #                         max=40,
-                        #                         step=0.5,
-                        #                         value=24,
-                        #                         marks=slider_marks,
-                        #                         vertical=True
-                        #                     )
-                        #                  ]),
-                        #     ]),
-                        #     dfx.Col(children=[
-                                
-                        #         ]),
-                        # ]),
-                        # html.Br(),
-                        # html.H6('L1'),
-                        # html.Div(style={'margin': '1em'},
-                        #                  children=[
-                        #                     dcc.Slider(
-                        #                         id='l1' + '-slider',
-                        #                         min=12,
-                        #                         max=40,
-                        #                         step=0.5,
-                        #                         value=24,
-                        #                         marks=slider_marks
-                        #                     )
-                        #                  ]),
-                        # html.Div(id='gusset-l1-value',
-                        #         style={'font-variant': 'small-caps'}
-                        #     )])
 
 def build_design_checks():
     return html.Div(id='gusset-design-checks',
-                    className='pretty-shadowless-container',
                     children=[generate_dcr_indicators()])
+
 
 dcr_list = ['axial-tension', 'axial-compression', 'moment', 'in-plane-shear',
             'out-of-plane-shear', 'Whitmore-section']
 
+
 def generate_dcr_indicators():
     bars = [create_dcr_indicator(item) for item in dcr_list]
-    return dfx.Row(children=bars)
+    return dfx.Row(children=bars,
+                   center='xs')
+
 
 def create_dcr_indicator(item):
     bar = daq.GraduatedBar(
           id=item + '-indicator',
-          color={'gradient': True, 'ranges': {'green': [0, 85], 'yellow': [85, 95], 'red': [95, 100]}},
+          color={'gradient': True, 'ranges': {'green': [0, 85],
+                 'yellow': [85, 95], 'red': [95, 100]}},
           showCurrentValue=True,
           max=100,
           value=90,
@@ -264,8 +248,9 @@ def build_outline_visualization():
     pass
 
 
-def generate_visualization():
-    fig = go.Figure(data=[{'x': [0, 1], 'y': [1, 0]}])
+def generate_visualization(GussetNode):
+    meshes = GussetNode.to_meshes()
+    fig = go.Figure(data=meshes)
     fig.update_layout(scene_aspectmode='data')
     return fig
 
@@ -280,19 +265,20 @@ app.layout = dfx.Grid(id='grid', fluid=True, children=[
                     dfx.Col(xs=12, lg=10,
                             className='pretty-container',
                             children=[
-                                html.Div(
-                                    id='big-app-container',
-
-                                    children=[
-                                        build_app_banner(),
-                                        html.Div(
-                                            id='app-container',
-                                            children=[
-                                                build_tabs(),
-                                                ]
-                                            ),
-                                        ]
+                                mui.Paper(children=[
+                                    html.Div(
+                                        id='big-app-container',
+                                        children=[
+                                            build_app_banner(),
+                                            html.Div(
+                                                id='app-container',
+                                                children=[
+                                                    build_tabs(),
+                                                    ]
+                                                ),
+                                            ]
                                     )
+                                ])
                                 ]),
                     dfx.Col(lg=1)
                     ])
