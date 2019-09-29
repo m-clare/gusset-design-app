@@ -94,7 +94,8 @@ def build_tab(category):
                             dfx.Row(children=[
                                     dfx.Col(lg=6, children=[build_io_panel()]),
                                     dfx.Col(lg=6, children=[
-                                        dcc.Graph(figure=generate_visualization(test)),
+                                        dcc.Graph(id='connection-3d-visualization',
+                                            figure=generate_visualization(test)),
                                         build_design_checks()
                                             ])
                                     ])
@@ -154,6 +155,7 @@ def build_gusset_parameters():
                             dfx.Col(children=[
                                 html.H6('Thickness'),
                                 daq.NumericInput(
+                                    id='gusset-thickness',
                                     label='(inches)',
                                     labelPosition='bottom',
                                     value=1,
@@ -162,8 +164,15 @@ def build_gusset_parameters():
                                     style={'font-variant': 'small-caps'}
                                 ),
                                 html.H6('L2'),
-                                html.Div(id='gusset-l2-value',
-                                         style={'font-variant': 'small-caps'}),
+                                daq.NumericInput(
+                                    id='gusset-l2-value',
+                                    label='L2 (inches)',
+                                    labelPosition='bottom',
+                                    value=24,
+                                    min=12,
+                                    max=40,
+                                    style={'font-variant': 'small-caps'}
+                                    ),
                                 html.Div(style={'height': '400px',
                                                 'margin': '1em'},
                                          children=[
@@ -174,22 +183,33 @@ def build_gusset_parameters():
                                                 step=0.5,
                                                 value=24,
                                                 marks=slider_marks,
-                                                vertical=True
+                                                vertical=False,
                                             )
                                          ]),
                             ]),
                             dfx.Col(children=[
-                                    dcc.Graph(figure=generate_visualization(test))]
+                                    dcc.Graph(
+                                        figure=generate_visualization(test))]
                                     ),
                         ]),
                         html.Br(),
                         html.H6('L1'),
-                        html.Div(id='gusset-l1-value',
-                                 style={'font-variant': 'small-caps'}),
+                        html.Div(id='gusset-l1-div',
+                            children=[
+                                daq.NumericInput(
+                                    id='gusset-l1-value',
+                                    label='L1 (inches)',
+                                    labelPosition='bottom',
+                                    value=24,
+                                    min=12,
+                                    max=40,
+                                    style={'font-variant': 'small-caps'}
+                                    )
+                            ]),
                         html.Div(style={'margin': '1em'},
                                  children=[
                                     dcc.Slider(
-                                        id='l1' + '-slider',
+                                        id='l1-slider',
                                         min=12,
                                         max=40,
                                         step=0.5,
@@ -254,6 +274,12 @@ def generate_visualization(GussetNode):
     fig.update_layout(scene_aspectmode='data')
     return fig
 
+def generate_3d_visualization(filepath):
+    meshes = GussetNode.to_meshes()
+    fig = go.Figure(data=meshes)
+    fig.update_layout(scene_aspectmode='data')
+    return fig
+
 #  ----------------------------------------------------------------------------
 #  Layout
 #  ----------------------------------------------------------------------------
@@ -290,19 +316,53 @@ app.layout = dfx.Grid(id='grid', fluid=True, children=[
 
 
 @app.callback(
-    Output(component_id='gusset-l1-value', component_property='children'),
+    Output(component_id='gusset-l1-value', component_property='value'),
     [Input(component_id='l1-slider', component_property='value')]
 )
-def update_l1_slider_value(input_value):
-    return '{} inches'.format(input_value)
-
+def update_l1_textbox_value(input_value):
+    return input_value
 
 @app.callback(
-    Output(component_id='gusset-l2-value', component_property='children'),
-    [Input(component_id='l2-slider', component_property='value')]
+    Output(component_id='l1-slider', component_property='value'),
+    [Input(component_id='gusset-l1-value', component_property='children')]
 )
-def update_l2_slider_value(input_value):
-    return '{} inches'.format(input_value)
+def update_l1_slider_value(input_value):
+    return input_value
+
+
+# @app.callback(Output('graph-1', 'figure'), [Input('signal', 'children')])
+# def update_graph_1(value):
+#     # generate_figure gets data from `global_store`.
+#     # the data in `global_store` has already been computed
+#     # by the `compute_value` callback and the result is stored
+#     # in the global redis cached
+#     return generate_figure(value, {
+#         'data': [{
+#             'type': 'scatter',
+#             'mode': 'markers',
+#             'marker': {
+#                 'opacity': 0.5,
+#                 'size': 14,
+#                 'line': {'border': 'thin darkgrey solid'}
+#             }
+#         }]
+#     })
+
+# @app.callback(
+#     Output(component_id='gusset-l2-value', component_property='children'),
+#     [Input(component_id='l1-slider', component_property='value')]
+# )
+# def update_l2_textbox_value(input_value):
+#     return '{} inches'.format(input_value)
+
+# @app.callback(
+#     Output(component_id='l2-slider', component_property='value'),
+#     [Input(component_id='gusset-l2-value', component_property='children')]
+# )
+# def update_l2_slider_value(input_value):
+#     return '{} inches'.format(input_value)
+
+
 
 if __name__ =='__main__':
     app.run_server(debug=True, port=8050)
