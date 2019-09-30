@@ -22,7 +22,9 @@ h1 {
 }
 
 .interior-container {
-
+  margin: 0px;
+  padding: 0px;
+  position: relative;
 }
 
 .custom-tabs{

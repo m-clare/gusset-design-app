@@ -111,13 +111,15 @@ def build_tabs():
 
 def build_tab(category):
     if category == 'Main':
-        return html.Div(className='row', children=[
-                    html.Div(className='six columns', children=[
-                        build_io_panel()
-                        ]),
-                    html.Div(className='six columns', children=[
-                        build_design_checks()
-                        ])
+        return html.Div(className='pretty container', children=[
+                    html.Div(className='row', children=[
+                            html.Div(className='six columns', children=[
+                                build_io_panel()
+                                ]),
+                            html.Div(className='six columns', children=[
+                                build_adjustment_panel()
+                                ])
+                            ])
                     ])
     elif category == 'Report':
         return html.Div(className='row', children=[
@@ -134,9 +136,22 @@ def build_io_panel():
                         build_assembly_input(),
                         html.Br(),
                         mui.Divider(),
+                        html.Br(),
+                    ])
+
+
+def build_adjustment_panel():
+    return html.Div(id='adjust-panel',
+                    style={'justify-content': 'center'},
+                    className='pretty container',
+                    children=[
                         build_gusset_parameters(),
                         html.Br(),
-                        mui.Divider(),   
+                        mui.Divider(),
+                        html.Div(id='store-contents',
+                                 style={'font-variant': 'small-caps',
+                                        'justify-content': 'left'}),
+                        build_design_checks(),
                     ])
 
 
@@ -148,7 +163,7 @@ def build_assembly_input():
     return html.Div(id='assembly',
                     children=[
                         html.Div(id='load-gusset-assembly',
-                                 className='my-container',
+                                 className='interior container',
                                  children=[
                                     html.H3('Assembly'),
                                     dcc.Input(
@@ -168,7 +183,7 @@ def build_assembly_input():
 
 
 def build_gusset_parameters():
-    return html.Div(className='my-container',
+    return html.Div(className='interior container',
                     children=[
                         html.H4('Gusset Parameters'),
                         html.Div(id='gusset-l2-value',
@@ -239,7 +254,7 @@ def create_dcr_indicator(item):
           id=item + '-indicator',
           color={'gradient': True, 'ranges': {'green': [0, 85],
                  'yellow': [85, 95], 'red': [95, 100]}},
-          showCurrentValue=True,
+          # showCurrentValue=True,
           max=100,
           value=90,
           vertical=True,
@@ -247,7 +262,9 @@ def create_dcr_indicator(item):
           )
     styled_bar = html.Div(id=item + '-bar-container', style={'margin': '1em'},
                           children=bar)
-    bar_div = dfx.Col(children=[styled_bar])
+    bar_div = dfx.Col(children=[
+                styled_bar,
+                html.Div(id=item + '-bar-value')])
     return bar_div
 
 
@@ -284,6 +301,7 @@ def generate_visualization(GussetNode):
     fig.update_layout(scene_aspectmode='data')
     return fig
 
+
 def generate_3d_visualization(filepath):
     meshes = GussetNode.to_meshes()
     fig = go.Figure(data=meshes)
@@ -302,6 +320,7 @@ def to_plotly_xy(line):
         pt1 = line[1]
         gusset_guideline = {'x': [pt0[0], pt1[0]], 'y': [pt0[1], pt1[1]]}
         return gusset_guideline
+
 #  ----------------------------------------------------------------------------
 #  Layout
 #  ----------------------------------------------------------------------------
@@ -316,7 +335,7 @@ app.layout = html.Div(id='grid', className='container', children=[
                                              children=[
                                                 build_app_banner(),
                                                 html.Div(children=[
-                                                    build_tabs(),
+                                                    build_tab('Main'),
                                                     ])
                                                 ])
                                  ])
@@ -346,8 +365,8 @@ def update_l2_textbox_value(input_value):
 
 
 @app.callback(
-    # [Output('plotly-2d-graph', 'figure'),
-    Output('local', 'data'),
+    [Output(component_id='store-contents', component_property='children'),
+     Output('local', 'data')],
     [Input('input-button', 'n_clicks')],
     [State('assembly-input-field', 'value')]
 )
@@ -360,13 +379,57 @@ def load_gusset_assembly(n_clicks, filepath):
         gusset_node = GussetNode.from_json(filepath)
         gusset = GussetPlate(gusset_node.braces[0], gusset_node.column[0],
                              gusset_node.beams[0], 'i', brace_angle=37.6)
+        V_c, H_c, M_c, V_b, H_b, M_b = gusset.calculate_interface_forces(400.)
         gusset_dict = {'eb': gusset.eb, 'ec': gusset.ec,
                        'offset': gusset.offset,
                        'design_angle': gusset.design_angle,
                        'brace_depth': gusset.get_brace_depth(),
-                       'connection_length': gusset.connection_length}
-        return gusset_dict
+                       'connection_length': gusset.connection_length,
+                       'force': 400.,
+                       'V_c': V_c,
+                       'H_c': H_c,
+                       'M_c': M_c,
+                       'V_b': V_b,
+                       'H_b': H_b,
+                       'M_b': M_b}
+        return gusset_dict, gusset_dict
 
+hc_forces = {'V_c': 181.14828930285879, 'H_c': 94.52172458426533, 'M_c': -112.39593118392548, 'V_b': 135.76756803921745, 'H_b': 149.53634097624172, 'M_b': 108.85293208805035}
+
+@app.callback(
+    [Output('axial-tension-indicator', 'value'),
+     Output('axial-tension-bar-value', 'children')],
+    [Input('l1-slider', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_axial_tension_dcr(l1):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    p_u = hc_forces['V_b']
+    thickness = 1.
+    phi_Pn = 0.9 * 50 * l1 * thickness
+    at_dcr = p_u / phi_Pn
+    return at_dcr, "{:.0%}".format(at_dcr)
+
+@app.callback(
+    Output('axial-compression-indicator', 'value'),
+    [Input('l1-slider', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_axial_tension_dcr(l1):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    p_u = hc_forces['V_b']
+    thickness = 1.
+    phi_Pn = 0.9 * 50 * l1 * thickness
+    at_dcr = p_u / phi_Pn
+    return at_dcr
 
 @app.callback(
      Output('plotly-2d-graph', 'figure'),
