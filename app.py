@@ -71,20 +71,16 @@ def build_app_banner():
 
 
 def build_main_app():
-    return html.Div(
-        id='main-app',
-        children=[
-            dfx.Row(children=[
-                dfx.Col(xs=6, children=[
-                    build_io_panel()
-                    ]
-                    ),
-                dfx.Col(xs=6, children=[
-                    dcc.Graph(figure=generate_visualization(test))
+    return html.Div(id='main-app', children=[
+                html.Div(className='row', children=[
+                    html.Div(className='six columns', children=[
+                        build_io_panel()
+                        ]),
+                    html.Div(className='six columns', children=[
+                        dcc.Graph(figure=generate_visualization(test))
+                        ])
                     ])
                 ])
-            ]
-        )
 
 
 def build_tabs():
@@ -97,11 +93,11 @@ def build_tabs():
                                className='custom-tab',
                                selected_className=category +
                                '-custom-tab--selected',
-                               children=build_tab(category))
+                               children=[build_tab(category)])
         category_tabs.append(category_tab)
     return html.Div(
         id='tabs',
-        className='tabs',
+        className='twelve columns',
         children=[
             dcc.Tabs(
                 id='app-tabs',
@@ -115,40 +111,32 @@ def build_tabs():
 
 def build_tab(category):
     if category == 'Main':
-        return [dfx.Grid(id=category+'-grid', fluid=True,
-                         children=[
-                            dfx.Row(children=[
-                                    dfx.Col(lg=6,
-                                        children=[
-                                            build_io_panel()]),
-                                    dfx.Col(lg=6,
-                                        children=[
-                                            dcc.Graph(id='connection-3d-visualization',
-                                                figure=generate_visualization(test)),
-                                            build_design_checks()
-                                                ])
-                                    ])
-                            ])]
+        return html.Div(className='row', children=[
+                    html.Div(className='six columns', children=[
+                        build_io_panel()
+                        ]),
+                    html.Div(className='six columns', children=[
+                        build_design_checks()
+                        ])
+                    ])
     elif category == 'Report':
-        return [dfx.Grid(id=category+'-grid',
-                         children=[
-                            dfx.Row(children=[
-                                dfx.Col(xs=6, children=html.Div()),
-                                dfx.Col(xs=6, children=html.Div()),
-                                ])
-                         ])]
+        return html.Div(className='row', children=[
+                    html.Div(className='six columns', children=[html.Div()]),
+                    html.Div(className='six columns', children=[html.Div()])
+            ])
 
 
 def build_io_panel():
     return html.Div(id='io-panel',
                     style={'justify-content': 'center'},
+                    className='pretty container',
                     children=[
                         build_assembly_input(),
+                        html.Br(),
                         mui.Divider(),
                         build_gusset_parameters(),
                         html.Br(),
-                        mui.Divider(),
-                        
+                        mui.Divider(),   
                     ])
 
 
@@ -173,7 +161,8 @@ def build_assembly_input():
                                              children=[
                                                 'Filepath'
                                             ]),
-                                    html.Button('Submit', id='input-button')
+                                    html.Br(),
+                                    html.Button('Submit', id='input-button'),
                                     ])
                         ])
 
@@ -182,62 +171,125 @@ def build_gusset_parameters():
     return html.Div(className='my-container',
                     children=[
                         html.H4('Gusset Parameters'),
-                        dfx.Row(children=[
-                            dfx.Col(xs=12,
-                                children=[
-                                html.Div(id='gusset_visualization',
-                                    children=[
-                                    # html.Div(id='None')
-                                    dcc.Graph(
-                                        id='plotly-2d-graph',
-                                        figure=go.Figure(data={'x': [0], 'y': [0]}),
-                                        )
-                                    ]),
-                                html.H6('Thickness'),
-                                daq.NumericInput(
-                                    id='gusset-thickness',
-                                    label='thickness (inches)',
-                                    labelPosition='bottom',
-                                    value=24,
-                                    min=12,
-                                    max=40,
-                                    style={'font-variant': 'small-caps'}
-                                    ),
-                                html.H6('L2'),
-                                html.Div(id='gusset-l2-value',
-                                         style={'font-variant': 'small-caps',
-                                                'justify-content': 'left'}),
-                                html.Div(style={'margin': '1em'},
-                                         children=[
-                                            dcc.Slider(
-                                                id='l2-slider',
-                                                min=12,
-                                                max=40,
-                                                step=0.5,
-                                                value=24,
-                                                marks=slider_marks,
-                                                vertical=False,
-                                            )
-                                         ]),
-                                html.Br(),
-                                html.H6('L1'),
-                                html.Div(id='gusset-l1-value',
-                                         style={'font-variant': 'small-caps',
-                                                'justify-content': 'left'}),
-                                html.Div(style={'margin': '1em'},
-                                         children=[
-                                            dcc.Slider(
-                                                id='l1-slider',
-                                                min=12,
-                                                max=40,
-                                                step=0.5,
-                                                value=24,
-                                                marks=slider_marks
-                                            )
-                                         ]),
+                        html.Div(className='row', children=[
+                            html.Div(className='two columns',
+                                     style={'justify-content': 'center'},
+                                     children=[
+                                        html.Div(id='gusset-l2-value',
+                                                 style={'font-variant': 'small-caps',
+                                                 'justify-content': 'center'}),
+                                        html.Div(style={'margin': '1em', 'height': '400px'},
+                                                 children=[
+                                                    dcc.Slider(
+                                                        id='l2-slider',
+                                                        min=12,
+                                                        max=40,
+                                                        step=0.5,
+                                                        value=24,
+                                                        marks=slider_marks,
+                                                        vertical=True,
+                                                    )
+                                                 ])
+                                            ]),
+                            html.Div(className='ten columns',
+                                     children=[
+                                        html.Div(className='row', children=[
+                                            html.Div(className='twelve columns', children=[
+                                                dcc.Graph(
+                                                    id='plotly-2d-graph',
+                                                    figure=create_default_plotly2d()),
+                                                html.Div(id='gusset-l1-value',
+                                                         style={'font-variant': 'small-caps',
+                                                                'justify-content': 'left'}),
+                                                html.Div(style={'margin': '1em'},
+                                                         children=[
+                                                            dcc.Slider(
+                                                                id='l1-slider',
+                                                                min=12,
+                                                                max=40,
+                                                                step=0.5,
+                                                                value=24,
+                                                                marks=slider_marks)
+                                                         ])
+                                                ])
+                                            ])
+                                        ])
                                     ])
-                            ])
                         ])
+                        # html.Br(),
+                        # html.Div(className='row', children=[
+                        #     html.Div(className='twelve columns',
+                        #              children=[
+                        #                 html.Div(id='gusset-l1-value',
+                        #                          style={'font-variant': 'small-caps',
+                        #                                 'justify-content': 'left'}),
+                        #                 html.Div(style={'margin': '1em'},
+                        #                          children=[
+                        #                             dcc.Slider(
+                        #                                 id='l1-slider',
+                        #                                 min=12,
+                        #                                 max=40,
+                        #                                 step=0.5,
+                        #                                 value=24,
+                        #                                 marks=slider_marks)
+                        #                          ])
+                        #                 ])
+                        #             ])       
+                        #         ])
+                        # dfx.Row(children=[
+                        #     dfx.Col(xs=12,
+                        #         children=[
+                        #         html.Div(id='gusset_visualization',
+                        #             children=[
+                        #                 dcc.Graph(
+                        #                     id='plotly-2d-graph',
+                        #                     figure=create_default_plotly2d()),
+                        #                 ]),
+                        #             html.H6('Thickness'),
+                        #             daq.NumericInput(
+                        #                 id='gusset-thickness',
+                        #                 label='thickness (inches)',
+                        #                 labelPosition='bottom',
+                        #                 value=24,
+                        #                 min=12,
+                        #                 max=40,
+                        #                 style={'font-variant': 'small-caps'}
+                        #                 ),
+                        #             html.H6('L2'),
+                        #             html.Div(id='gusset-l2-value',
+                        #                      style={'font-variant': 'small-caps',
+                        #                             'justify-content': 'left'}),
+                        #             html.Div(style={'margin': '1em'},
+                        #                      children=[
+                        #                         dcc.Slider(
+                        #                             id='l2-slider',
+                        #                             min=12,
+                        #                             max=40,
+                        #                             step=0.5,
+                        #                             value=24,
+                        #                             marks=slider_marks,
+                        #                             vertical=False,
+                        #                         )
+                        #                      ]),
+                        #             html.Br(),
+                        #             html.H6('L1'),
+                        #             html.Div(id='gusset-l1-value',
+                        #                      style={'font-variant': 'small-caps',
+                        #                             'justify-content': 'left'}),
+                        #             html.Div(style={'margin': '1em'},
+                        #                      children=[
+                        #                         dcc.Slider(
+                        #                             id='l1-slider',
+                        #                             min=12,
+                        #                             max=40,
+                        #                             step=0.5,
+                        #                             value=24,
+                        #                             marks=slider_marks
+                        #                         )
+                        #                      ]),
+                        #                 ])
+                        #     ])
+                        # ])
 
 
 def build_design_checks():
@@ -271,6 +323,17 @@ def create_dcr_indicator(item):
     bar_div = dfx.Col(children=[styled_bar])
     return bar_div
 
+
+def create_default_plotly2d():
+    figure = go.Figure(data={'x': [0], 'y': [0]})
+    figure.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1),
+                         paper_bgcolor='rgba(0,0,0,0)',
+                         plot_bgcolor='rgba(0,0,0,0)',
+                         showlegend=False,
+                         margin=dict(l=10, t=10, b=10))
+    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False)
+    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False)
+    return figure
 
 def build_visualization_panel():
     pass
@@ -309,32 +372,21 @@ def generate_3d_visualization(filepath):
 #  Layout
 #  ----------------------------------------------------------------------------
 
-
-app.layout = dfx.Grid(id='grid', fluid=True, children=[
-                dfx.Row(children=[
-                    dfx.Col(lg=1),
-                    dfx.Col(xs=12, lg=10,
-                            className='pretty-container',
-                            children=[
-                                mui.Paper(children=[
-                                    html.Div(
-                                        dcc.Store(id='local',
-                                                  storage_type='local')),
-                                    html.Div(
-                                        id='big-app-container',
-                                        children=[
-                                            build_app_banner(),
-                                            html.Div(
-                                                id='app-container',
-                                                children=[
+app.layout = html.Div(id='grid', className='container', children=[
+                mui.Paper(children=[
+                    html.Div(className='row', children=[
+                        html.Div(dcc.Store(id='local', storage_type='local')),
+                        html.Div(className='twelve columns',
+                                 children=[
+                                    html.Div(id='app-container',
+                                             children=[
+                                                build_app_banner(),
+                                                html.Div(children=[
                                                     build_tabs(),
-                                                    ]
-                                                ),
-                                            ]
-                                    )
-                                ])
-                                ]),
-                    dfx.Col(lg=1)
+                                                    ])
+                                                ])
+                                 ])
+                        ])
                     ])
                 ])
 
@@ -438,14 +490,14 @@ def update_2d_plot(l1, l2, ts, gusset_data):
         else: 
             raise ValueError
 
-            brace_member_int = intersection_line_line_xy(offset_brace,
-                                                         offset_member)
-            brace_pt = translate_points_xy([brace_member_int], brace_vector)[0]
-            pt_mirrored = mirror_point_line(brace_pt, brace_CL)
-            line_segment = Line(brace_pt, pt_mirrored)
-            pt_CL = intersection_line_line_xy(line_segment, brace_CL)
-            pt_distance = distance_point_point(work_point, pt_CL)
-            return line_segment, pt_distance, offset_brace, offset_brace_signed
+        brace_member_int = intersection_line_line_xy(offset_brace,
+                                                     offset_member)
+        brace_pt = translate_points_xy([brace_member_int], brace_vector)[0]
+        pt_mirrored = mirror_point_line(brace_pt, brace_CL)
+        line_segment = Line(brace_pt, pt_mirrored)
+        pt_CL = intersection_line_line_xy(line_segment, brace_CL)
+        pt_distance = distance_point_point(work_point, pt_CL)
+        return line_segment, pt_distance, offset_brace, offset_brace_signed
 
     column_line, col_dist, os_brace_column, os_column = get_brace_points(column_offset, column_line,
                                                                          brace_CL, brace_vector, offset_dir='+')
@@ -474,6 +526,8 @@ def update_2d_plot(l1, l2, ts, gusset_data):
     pt2 = Point(pt2[0], pt2[1], pt2[2])
     pt6 = Point(pt6[0], pt6[1], pt6[2])
     pt5 = Point(pt5[0], pt5[1], pt5[2])
+    pt3 = Point(pt3[0], pt3[1], pt3[2])
+    pt4 = Point(pt4[0], pt4[1], pt4[2])
 
     gusset_points = [pt0, pt1, pt2, pt3, pt4, pt5, pt6, pt0]
     x = []
@@ -486,9 +540,10 @@ def update_2d_plot(l1, l2, ts, gusset_data):
     figure.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1),
                          paper_bgcolor='rgba(0,0,0,0)',
                          plot_bgcolor='rgba(0,0,0,0)',
-                         showlegend=False)
-    figure.update_xaxes(showgrid=False, zeroline=False)
-    figure.update_yaxes(showgrid=False, zeroline=False)
+                         showlegend=False,
+                         margin=dict(l=10, t=10, b=10))
+    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False)
+    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False)
     return figure
 
 
