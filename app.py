@@ -171,13 +171,13 @@ def build_gusset_parameters():
     return html.Div(className='my-container',
                     children=[
                         html.H4('Gusset Parameters'),
+                        html.Div(id='gusset-l2-value',
+                                 style={'font-variant': 'small-caps',
+                                        'justify-content': 'left'}),
                         html.Div(className='row', children=[
                             html.Div(className='two columns',
                                      style={'justify-content': 'center'},
                                      children=[
-                                        html.Div(id='gusset-l2-value',
-                                                 style={'font-variant': 'small-caps',
-                                                 'justify-content': 'center'}),
                                         html.Div(style={'margin': '1em', 'height': '400px'},
                                                  children=[
                                                     dcc.Slider(
@@ -198,9 +198,6 @@ def build_gusset_parameters():
                                                 dcc.Graph(
                                                     id='plotly-2d-graph',
                                                     figure=create_default_plotly2d()),
-                                                html.Div(id='gusset-l1-value',
-                                                         style={'font-variant': 'small-caps',
-                                                                'justify-content': 'left'}),
                                                 html.Div(style={'margin': '1em'},
                                                          children=[
                                                             dcc.Slider(
@@ -210,86 +207,16 @@ def build_gusset_parameters():
                                                                 step=0.5,
                                                                 value=24,
                                                                 marks=slider_marks)
-                                                         ])
+                                                         ]),
+                                                html.Br(),
+                                                html.Div(id='gusset-l1-value',
+                                                         style={'font-variant': 'small-caps',
+                                                                'justify-content': 'left'}),
                                                 ])
                                             ])
                                         ])
                                     ])
                         ])
-                        # html.Br(),
-                        # html.Div(className='row', children=[
-                        #     html.Div(className='twelve columns',
-                        #              children=[
-                        #                 html.Div(id='gusset-l1-value',
-                        #                          style={'font-variant': 'small-caps',
-                        #                                 'justify-content': 'left'}),
-                        #                 html.Div(style={'margin': '1em'},
-                        #                          children=[
-                        #                             dcc.Slider(
-                        #                                 id='l1-slider',
-                        #                                 min=12,
-                        #                                 max=40,
-                        #                                 step=0.5,
-                        #                                 value=24,
-                        #                                 marks=slider_marks)
-                        #                          ])
-                        #                 ])
-                        #             ])       
-                        #         ])
-                        # dfx.Row(children=[
-                        #     dfx.Col(xs=12,
-                        #         children=[
-                        #         html.Div(id='gusset_visualization',
-                        #             children=[
-                        #                 dcc.Graph(
-                        #                     id='plotly-2d-graph',
-                        #                     figure=create_default_plotly2d()),
-                        #                 ]),
-                        #             html.H6('Thickness'),
-                        #             daq.NumericInput(
-                        #                 id='gusset-thickness',
-                        #                 label='thickness (inches)',
-                        #                 labelPosition='bottom',
-                        #                 value=24,
-                        #                 min=12,
-                        #                 max=40,
-                        #                 style={'font-variant': 'small-caps'}
-                        #                 ),
-                        #             html.H6('L2'),
-                        #             html.Div(id='gusset-l2-value',
-                        #                      style={'font-variant': 'small-caps',
-                        #                             'justify-content': 'left'}),
-                        #             html.Div(style={'margin': '1em'},
-                        #                      children=[
-                        #                         dcc.Slider(
-                        #                             id='l2-slider',
-                        #                             min=12,
-                        #                             max=40,
-                        #                             step=0.5,
-                        #                             value=24,
-                        #                             marks=slider_marks,
-                        #                             vertical=False,
-                        #                         )
-                        #                      ]),
-                        #             html.Br(),
-                        #             html.H6('L1'),
-                        #             html.Div(id='gusset-l1-value',
-                        #                      style={'font-variant': 'small-caps',
-                        #                             'justify-content': 'left'}),
-                        #             html.Div(style={'margin': '1em'},
-                        #                      children=[
-                        #                         dcc.Slider(
-                        #                             id='l1-slider',
-                        #                             min=12,
-                        #                             max=40,
-                        #                             step=0.5,
-                        #                             value=24,
-                        #                             marks=slider_marks
-                        #                         )
-                        #                      ]),
-                        #                 ])
-                        #     ])
-                        # ])
 
 
 def build_design_checks():
@@ -331,8 +258,8 @@ def create_default_plotly2d():
                          plot_bgcolor='rgba(0,0,0,0)',
                          showlegend=False,
                          margin=dict(l=10, t=10, b=10))
-    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False)
-    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False)
+    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
+    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
     return figure
 
 def build_visualization_panel():
@@ -368,6 +295,13 @@ def generate_3d_visualization(filepath):
 #  ----------------------------------------------------------------------------
 
 
+def to_plotly_xy(line):
+    x, y = [], []
+    if len(line) == 2:
+        pt0 = line[0]
+        pt1 = line[1]
+        gusset_guideline = {'x': [pt0[0], pt1[0]], 'y': [pt0[1], pt1[1]]}
+        return gusset_guideline
 #  ----------------------------------------------------------------------------
 #  Layout
 #  ----------------------------------------------------------------------------
@@ -400,7 +334,7 @@ app.layout = html.Div(id='grid', className='container', children=[
     [Input(component_id='l1-slider', component_property='value')]
 )
 def update_l1_textbox_value(input_value):
-    return input_value
+    return '{} inches'.format(input_value)
 
 
 @app.callback(
@@ -408,7 +342,7 @@ def update_l1_textbox_value(input_value):
     [Input(component_id='l2-slider', component_property='value')]
 )
 def update_l2_textbox_value(input_value):
-    return input_value
+    return '{} inches'.format(input_value)
 
 
 @app.callback(
@@ -457,7 +391,7 @@ def update_2d_plot(l1, l2, ts, gusset_data):
     brace_vector = Vector(sin(radians(data['design_angle'])),
                           cos(radians(data['design_angle'])), 0)
     brace_vector.unitize()
-    brace_vector.scale(100)
+    brace_vector.scale(200)
     brace_pt = translate_points_xy([work_point], brace_vector)[0]
     test = brace_vector.copy()
     test.scale(1)
@@ -530,20 +464,27 @@ def update_2d_plot(l1, l2, ts, gusset_data):
     pt4 = Point(pt4[0], pt4[1], pt4[2])
 
     gusset_points = [pt0, pt1, pt2, pt3, pt4, pt5, pt6, pt0]
+
     x = []
     y = []
     for pt in gusset_points:
         x.append(pt[0])
         y.append(pt[1])
     gusset_outline = {'x': x, 'y': y}
-    figure = go.Figure(data=gusset_outline)
+    plotly_styled = PlotlyLineXY.from_geometry(gusset_outline)
+    gusset_lines_styled = [plotly_styled]
+    for line in gusset_lines:
+        line_formatted = to_plotly_xy(line)
+        line_info = PlotlyLineXY.from_geometry(line_formatted, line={'color': 'gray', 'dash': 'dash'})
+        gusset_lines_styled.append(line_info)
+    figure = go.Figure(data=gusset_lines_styled)
     figure.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1),
                          paper_bgcolor='rgba(0,0,0,0)',
                          plot_bgcolor='rgba(0,0,0,0)',
                          showlegend=False,
                          margin=dict(l=10, t=10, b=10))
-    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False)
-    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False)
+    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
+    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
     return figure
 
 
