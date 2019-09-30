@@ -11,9 +11,31 @@ import plotly.graph_objs as go
 import sd_material_ui as mui
 import json
 
+# gusset design info
 from gusset_design.elements.gusset_node import GussetNode
+from gusset_design.elements.gusset_plate import GussetPlate
+from gusset_design.visualization.plotly2D import PlotlyLineXY
 
-# my_gusset_node = GussetNode
+from numpy import tan
+from numpy import sin
+from numpy import cos
+from numpy import radians
+
+# Compas classes
+from compas.geometry import Point
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Vector
+
+# Compas methods
+from compas.geometry import angle_points
+from compas.geometry import translate_points_xy
+from compas.geometry import translate_points
+from compas.geometry import offset_line
+from compas.geometry import intersection_line_line_xy
+from compas.geometry import distance_point_point
+from compas.geometry.transformations.transformations import mirror_point_line
+from compas.geometry.xforms.transformation import Transformation
 
 app = dash.Dash(
     __name__,
@@ -22,12 +44,16 @@ app = dash.Dash(
     )
 
 server = app.server
-app.config['suppress_callback_exceptions'] = True
+# app.config['suppress_callback_exceptions'] = True
+app.config.suppress_callback_exceptions = True
 
 #  ----------------------------------------------------------------------------
 #  Components
 #  ----------------------------------------------------------------------------
+
 test = GussetNode.from_json('../gusset_design/examples/sample_node.json')
+# initialize gusset node
+gusset_node = None
 
 def build_app_banner():
     return html.Div(
@@ -92,12 +118,15 @@ def build_tab(category):
         return [dfx.Grid(id=category+'-grid', fluid=True,
                          children=[
                             dfx.Row(children=[
-                                    dfx.Col(lg=6, children=[build_io_panel()]),
-                                    dfx.Col(lg=6, children=[
-                                        dcc.Graph(id='connection-3d-visualization',
-                                            figure=generate_visualization(test)),
-                                        build_design_checks()
-                                            ])
+                                    dfx.Col(lg=6,
+                                        children=[
+                                            build_io_panel()]),
+                                    dfx.Col(lg=6,
+                                        children=[
+                                            dcc.Graph(id='connection-3d-visualization',
+                                                figure=generate_visualization(test)),
+                                            build_design_checks()
+                                                ])
                                     ])
                             ])]
     elif category == 'Report':
@@ -137,12 +166,14 @@ def build_assembly_input():
                                     dcc.Input(
                                         id='assembly-input-field',
                                         type='text',
-                                        placeholder='filepath/to/assembly.json'
+                                        placeholder='filepath/to/assembly.json',
+                                        style={'width': '100%'}
                                     ),
                                     html.Div(style={'font-variant': 'small-caps'},
                                              children=[
                                                 'Filepath'
-                                            ])
+                                            ]),
+                                    html.Button('Submit', id='input-button')
                                     ])
                         ])
 
@@ -152,32 +183,34 @@ def build_gusset_parameters():
                     children=[
                         html.H4('Gusset Parameters'),
                         dfx.Row(children=[
-                            dfx.Col(children=[
+                            dfx.Col(xs=12,
+                                children=[
+                                html.Div(id='gusset_visualization',
+                                    children=[
+                                    # html.Div(id='None')
+                                    dcc.Graph(
+                                        id='plotly-2d-graph',
+                                        figure=go.Figure(data={'x': [0], 'y': [0]}),
+                                        )
+                                    ]),
                                 html.H6('Thickness'),
                                 daq.NumericInput(
                                     id='gusset-thickness',
-                                    label='(inches)',
-                                    labelPosition='bottom',
-                                    value=1,
-                                    min=0.5,
-                                    max=4,
-                                    style={'font-variant': 'small-caps'}
-                                ),
-                                html.H6('L2'),
-                                daq.NumericInput(
-                                    id='gusset-l2-value',
-                                    label='L2 (inches)',
+                                    label='thickness (inches)',
                                     labelPosition='bottom',
                                     value=24,
                                     min=12,
                                     max=40,
                                     style={'font-variant': 'small-caps'}
                                     ),
-                                html.Div(style={'height': '400px',
-                                                'margin': '1em'},
+                                html.H6('L2'),
+                                html.Div(id='gusset-l2-value',
+                                         style={'font-variant': 'small-caps',
+                                                'justify-content': 'left'}),
+                                html.Div(style={'margin': '1em'},
                                          children=[
                                             dcc.Slider(
-                                                id='l2' + '-slider',
+                                                id='l2-slider',
                                                 min=12,
                                                 max=40,
                                                 step=0.5,
@@ -186,37 +219,24 @@ def build_gusset_parameters():
                                                 vertical=False,
                                             )
                                          ]),
-                            ]),
-                            dfx.Col(children=[
-                                    dcc.Graph(
-                                        figure=generate_visualization(test))]
-                                    ),
-                        ]),
-                        html.Br(),
-                        html.H6('L1'),
-                        html.Div(id='gusset-l1-div',
-                            children=[
-                                daq.NumericInput(
-                                    id='gusset-l1-value',
-                                    label='L1 (inches)',
-                                    labelPosition='bottom',
-                                    value=24,
-                                    min=12,
-                                    max=40,
-                                    style={'font-variant': 'small-caps'}
-                                    )
-                            ]),
-                        html.Div(style={'margin': '1em'},
-                                 children=[
-                                    dcc.Slider(
-                                        id='l1-slider',
-                                        min=12,
-                                        max=40,
-                                        step=0.5,
-                                        value=24,
-                                        marks=slider_marks
-                                    )
-                                 ]),
+                                html.Br(),
+                                html.H6('L1'),
+                                html.Div(id='gusset-l1-value',
+                                         style={'font-variant': 'small-caps',
+                                                'justify-content': 'left'}),
+                                html.Div(style={'margin': '1em'},
+                                         children=[
+                                            dcc.Slider(
+                                                id='l1-slider',
+                                                min=12,
+                                                max=40,
+                                                step=0.5,
+                                                value=24,
+                                                marks=slider_marks
+                                            )
+                                         ]),
+                                    ])
+                            ])
                         ])
 
 
@@ -281,6 +301,11 @@ def generate_3d_visualization(filepath):
     return fig
 
 #  ----------------------------------------------------------------------------
+#  Calculations
+#  ----------------------------------------------------------------------------
+
+
+#  ----------------------------------------------------------------------------
 #  Layout
 #  ----------------------------------------------------------------------------
 
@@ -292,6 +317,9 @@ app.layout = dfx.Grid(id='grid', fluid=True, children=[
                             className='pretty-container',
                             children=[
                                 mui.Paper(children=[
+                                    html.Div(
+                                        dcc.Store(id='local',
+                                                  storage_type='local')),
                                     html.Div(
                                         id='big-app-container',
                                         children=[
@@ -314,54 +342,154 @@ app.layout = dfx.Grid(id='grid', fluid=True, children=[
 #  Callbacks
 #  ----------------------------------------------------------------------------
 
-
+# Slider / Text Values
 @app.callback(
-    Output(component_id='gusset-l1-value', component_property='value'),
+    Output(component_id='gusset-l1-value', component_property='children'),
     [Input(component_id='l1-slider', component_property='value')]
 )
 def update_l1_textbox_value(input_value):
     return input_value
 
+
 @app.callback(
-    Output(component_id='l1-slider', component_property='value'),
-    [Input(component_id='gusset-l1-value', component_property='children')]
+    Output(component_id='gusset-l2-value', component_property='children'),
+    [Input(component_id='l2-slider', component_property='value')]
 )
-def update_l1_slider_value(input_value):
+def update_l2_textbox_value(input_value):
     return input_value
 
 
-# @app.callback(Output('graph-1', 'figure'), [Input('signal', 'children')])
-# def update_graph_1(value):
-#     # generate_figure gets data from `global_store`.
-#     # the data in `global_store` has already been computed
-#     # by the `compute_value` callback and the result is stored
-#     # in the global redis cached
-#     return generate_figure(value, {
-#         'data': [{
-#             'type': 'scatter',
-#             'mode': 'markers',
-#             'marker': {
-#                 'opacity': 0.5,
-#                 'size': 14,
-#                 'line': {'border': 'thin darkgrey solid'}
-#             }
-#         }]
-#     })
+@app.callback(
+    # [Output('plotly-2d-graph', 'figure'),
+    Output('local', 'data'),
+    [Input('input-button', 'n_clicks')],
+    [State('assembly-input-field', 'value')]
+)
+def load_gusset_assembly(n_clicks, filepath):
+    if n_clicks is None:
+        raise PreventUpdate
+    elif filepath is None:
+        raise PreventUpdate
+    else:
+        gusset_node = GussetNode.from_json(filepath)
+        gusset = GussetPlate(gusset_node.braces[0], gusset_node.column[0],
+                             gusset_node.beams[0], 'i', brace_angle=37.6)
+        gusset_dict = {'eb': gusset.eb, 'ec': gusset.ec,
+                       'offset': gusset.offset,
+                       'design_angle': gusset.design_angle,
+                       'brace_depth': gusset.get_brace_depth(),
+                       'connection_length': gusset.connection_length}
+        return gusset_dict
 
-# @app.callback(
-#     Output(component_id='gusset-l2-value', component_property='children'),
-#     [Input(component_id='l1-slider', component_property='value')]
-# )
-# def update_l2_textbox_value(input_value):
-#     return '{} inches'.format(input_value)
 
-# @app.callback(
-#     Output(component_id='l2-slider', component_property='value'),
-#     [Input(component_id='gusset-l2-value', component_property='children')]
-# )
-# def update_l2_slider_value(input_value):
-#     return '{} inches'.format(input_value)
+@app.callback(
+     Output('plotly-2d-graph', 'figure'),
+     [Input('l1-slider', 'value'),
+      Input('l2-slider', 'value'),
+      Input('local', 'modified_timestamp')],
+     [State('local', 'data')]
+)
+def update_2d_plot(l1, l2, ts, gusset_data):
+    if ts is None:
+        raise PreventUpdate
+    data = gusset_data or {}
+    gusset_lines = []
+    work_point = [0, 0, 0]
+    pt0 = list(Point(data['eb'], data['ec']))
+    pt1 = translate_points_xy([pt0], Vector(l1, 0, 0))[0]
+    pt2 = translate_points_xy([pt1], Vector(0, data['offset'], 0))[0]
+    pt6 = translate_points_xy([pt0], Vector(0, l2, 0))[0]
+    pt5 = translate_points_xy([pt6], Vector(data['offset'], 0, 0))[0]
 
+    # Brace CL
+    brace_vector = Vector(sin(radians(data['design_angle'])),
+                          cos(radians(data['design_angle'])), 0)
+    brace_vector.unitize()
+    brace_vector.scale(100)
+    brace_pt = translate_points_xy([work_point], brace_vector)[0]
+    test = brace_vector.copy()
+    test.scale(1)
+    brace_pt_out = translate_points_xy([work_point], test)[0]
+    brace_CL = Line([0, 0, 0], brace_pt)
+
+    gusset_lines.append(Line([0, 0, 0], brace_pt_out))
+
+    brace_vector.unitize()
+    brace_vector.scale(data['connection_length'])
+
+
+    # Brace shoulder lines
+    brace_depth = data['brace_depth']
+    column_offset = brace_depth * 0.5 + data['offset']
+    beam_offset = -(brace_depth * 0.5 + data['offset'])
+    column_line = Line(pt5, Point(pt5[0], 0, 0))
+    beam_line = Line(pt2, Point(0, pt2[1], 0))
+
+    gusset_lines.append(column_line)
+    gusset_lines.append(beam_line)
+
+    def get_brace_points(offset_value, offset_member,
+                         brace_CL, brace_vector, offset_dir='+'):
+        offset_brace = offset_line(brace_CL, offset_value)
+        if offset_dir == '+':
+            offset_brace_signed = offset_line(brace_CL, offset_value - data['offset'])
+        elif offset_dir == '-':
+            offset_brace_signed = offset_line(brace_CL, offset_value + data['offset'])
+        else: 
+            raise ValueError
+
+            brace_member_int = intersection_line_line_xy(offset_brace,
+                                                         offset_member)
+            brace_pt = translate_points_xy([brace_member_int], brace_vector)[0]
+            pt_mirrored = mirror_point_line(brace_pt, brace_CL)
+            line_segment = Line(brace_pt, pt_mirrored)
+            pt_CL = intersection_line_line_xy(line_segment, brace_CL)
+            pt_distance = distance_point_point(work_point, pt_CL)
+            return line_segment, pt_distance, offset_brace, offset_brace_signed
+
+    column_line, col_dist, os_brace_column, os_column = get_brace_points(column_offset, column_line,
+                                                                         brace_CL, brace_vector, offset_dir='+')
+    beam_line, beam_dist, os_brace_beam, os_beam = get_brace_points(beam_offset, beam_line,
+                                            brace_CL, brace_vector, offset_dir='-')
+
+    gusset_lines.append(os_brace_column)
+    gusset_lines.append(os_brace_beam)
+    gusset_lines.append(os_column)
+    gusset_lines.append(os_beam)
+    gusset_lines.append(column_line)
+    gusset_lines.append(beam_line)
+
+    if col_dist > beam_dist:
+        pt3 = column_line[1]
+        pt4 = column_line[0]
+    else:
+        pt3 = beam_line[0]
+        pt4 = beam_line[1]
+
+    # set check to make sure gusset is non concave (force points to line
+    # between pt2 and pt5)
+    # Points list to point
+    pt0 = Point(pt0[0], pt0[1], pt0[2])
+    pt1 = Point(pt1[0], pt1[1], pt1[2])
+    pt2 = Point(pt2[0], pt2[1], pt2[2])
+    pt6 = Point(pt6[0], pt6[1], pt6[2])
+    pt5 = Point(pt5[0], pt5[1], pt5[2])
+
+    gusset_points = [pt0, pt1, pt2, pt3, pt4, pt5, pt6, pt0]
+    x = []
+    y = []
+    for pt in gusset_points:
+        x.append(pt[0])
+        y.append(pt[1])
+    gusset_outline = {'x': x, 'y': y}
+    figure = go.Figure(data=gusset_outline)
+    figure.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1),
+                         paper_bgcolor='rgba(0,0,0,0)',
+                         plot_bgcolor='rgba(0,0,0,0)',
+                         showlegend=False)
+    figure.update_xaxes(showgrid=False, zeroline=False)
+    figure.update_yaxes(showgrid=False, zeroline=False)
+    return figure
 
 
 if __name__ =='__main__':
