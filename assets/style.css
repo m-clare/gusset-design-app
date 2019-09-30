@@ -13,12 +13,9 @@ h1 {
 
 
 .pretty-container {
-  /*border-radius: 5px;*/
-  background-color: #f9f9f9;
   margin: 8px;
   padding: 8px;
   position: relative;
-  /*box-shadow: 2px 2px 2px lightgrey;*/
 }
 
 .interior-container {
@@ -37,3 +34,8 @@ h1 {
   padding-top: 2%;
   margin-right: 2%;
 }*/
+
+#app-container {
+    margin: 16px;
+    position: relative;
+}

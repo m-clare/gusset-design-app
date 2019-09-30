@@ -20,6 +20,8 @@ from numpy import tan
 from numpy import sin
 from numpy import cos
 from numpy import radians
+from numpy import abs
+from numpy import sqrt
 
 # Compas classes
 from compas.geometry import Point
@@ -126,7 +128,7 @@ def build_tab(category):
                     html.Div(className='six columns', children=[html.Div()]),
                     html.Div(className='six columns', children=[html.Div()])
             ])
-
+        
 
 def build_io_panel():
     return html.Div(id='io-panel',
@@ -137,6 +139,9 @@ def build_io_panel():
                         html.Br(),
                         mui.Divider(),
                         html.Br(),
+                        html.H4('3D Visualization'),
+                        dcc.Graph(id='connection-3d-visualization',
+                                  figure=build_default_3d_visualization()),
                     ])
 
 
@@ -165,7 +170,7 @@ def build_assembly_input():
                         html.Div(id='load-gusset-assembly',
                                  className='interior container',
                                  children=[
-                                    html.H3('Assembly'),
+                                    html.H4('Assembly'),
                                     dcc.Input(
                                         id='assembly-input-field',
                                         type='text',
@@ -213,24 +218,41 @@ def build_gusset_parameters():
                                                 dcc.Graph(
                                                     id='plotly-2d-graph',
                                                     figure=create_default_plotly2d()),
-                                                html.Div(style={'margin': '1em'},
-                                                         children=[
-                                                            dcc.Slider(
-                                                                id='l1-slider',
-                                                                min=12,
-                                                                max=40,
-                                                                step=0.5,
-                                                                value=24,
-                                                                marks=slider_marks)
-                                                         ]),
-                                                html.Br(),
-                                                html.Div(id='gusset-l1-value',
-                                                         style={'font-variant': 'small-caps',
-                                                                'justify-content': 'left'}),
                                                 ])
                                             ])
-                                        ])
-                                    ])
+                                        ]),
+                            ]),
+                        html.Div(className='row', children=[
+                            html.Div(className='two columns',
+                                     children=[
+                                        daq.NumericInput(
+                                            id='gusset-thickness',
+                                            label='Plate Thickness',
+                                            labelPosition='top',
+                                            value=1.,
+                                            min=0.5,
+                                            max=4
+                                            ),
+                                        html.H6('(in)', style={'justify-content': 'center'})
+                                     ]),
+                            html.Div(className='ten columns',
+                                     children=[
+                                        html.Div(style={'margin': '1em'},
+                                                 children=[
+                                                    dcc.Slider(
+                                                        id='l1-slider',
+                                                        min=12,
+                                                        max=40,
+                                                        step=0.5,
+                                                        value=24,
+                                                        marks=slider_marks)
+                                                 ]),
+                                        html.Br(),
+                                        html.Div(id='gusset-l1-value',
+                                                 style={'font-variant': 'small-caps',
+                                                        'justify-content': 'left'}),
+                                                 ])
+                            ])    
                         ])
 
 
@@ -238,6 +260,7 @@ def build_design_checks():
     return html.Div(id='gusset-design-checks',
                     children=[
                     html.H4('Design Checks'),
+                    html.H5('Brace Force = {} (kips)'.format(400)),
                     dfx.Row(center='xs',
                         children=[
                         html.Div(className='row', children=[
@@ -263,11 +286,9 @@ def build_design_checks():
                     ])
 
 
-dcr_list = ['axial-tension', 'moment', 'in-plane-shear',
-            'out-of-plane-shear', 'Von-Mises']
+dcr_list = ['axial-tension', 'moment', 'shear', 'Von-Mises']
 
-dcr_key = {'axial-tension': 'P (+)', 'moment': 'M', 'in-plane-shear': 'V1', 
-           'out-of-plane-shear': 'V2', 'Von-Mises': 'VM'}
+dcr_key = {'axial-tension': 'P (+)', 'moment': 'M', 'shear': 'V', 'Von-Mises': 'VM'}
 
 def generate_beam_dcr_indicators():
     circles = [create_dcr_indicator('beam-' + item) for item in dcr_list]
@@ -290,7 +311,7 @@ def create_dcr_indicator(item):
              value=True,
              color= "#000000"
              )
-    styled_circle = html.Div(id=item + '-circle-container', style={'margin': '1em'},
+    styled_circle = html.Div(id=item + '-circle-container', style={'margin': '1em', 'width': '30px'},
                              children=[circle])
     circle_div = dfx.Col(children=[
                     styled_circle,
@@ -334,34 +355,35 @@ def create_default_plotly2d():
     figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
     return figure
 
-def build_visualization_panel():
-    pass
-
 
 def build_gusset_node_visualization():
     pass
 
 
-def build_guidelines_visualization():
-    pass
+def build_default_3d_visualization():
 
-
-def build_outline_visualization():
-    pass
-
-
-def generate_visualization(GussetNode):
-    meshes = GussetNode.to_meshes()
-    fig = go.Figure(data=meshes)
-    fig.update_layout(scene_aspectmode='data')
-    return fig
-
-
-def generate_3d_visualization(filepath):
-    meshes = GussetNode.to_meshes()
-    fig = go.Figure(data=meshes)
-    fig.update_layout(scene_aspectmode='data')
-    return fig
+    figure = go.Figure(data=go.Scatter3d({'x': [0], 'y': [0], 'z': [0]}, visible=False))
+    figure.update_layout(showlegend=False,
+                         margin=dict(l=10, t=10, b=10),
+                         scene_xaxis=dict(range=[-10, 10]),
+                         scene_yaxis=dict(range=[0, 100]),
+                         scene_zaxis=dict(range=[0, 200]))
+    figure.update_layout(scene_aspectmode='manual', scene_aspectratio=dict(x=1, y=1, z=1))
+    # figure.update_xaxes(range=[-10, 10])
+    # figure.update_yaxes(range=[0, 100])
+    # figure.update_zaxes(range=[0, 200])
+    # figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
+    # figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
+    # data= {'x': [-10, 10, -10, 10, -10, 10, -10, 10],
+    #        'y': [0, 0, 100, 100, 0, 0, 100, 100],
+    #        'z': [0, 0, 0, 0, 200, 200, 200, 200],
+    #        }
+    # meshes = GussetNode.to_meshes()
+    # fig = go.Figure(data=[go.Scatter3d(x=data['x'], y=data['y'], z=data['z'], mode='markers',
+    #                 visible=False,
+    #                 marker=dict(opacity=0.0, size=0))])
+    # fig.update_layout(scene_aspectmode='data')
+    return figure
 
 #  ----------------------------------------------------------------------------
 #  Calculations
@@ -408,7 +430,7 @@ app.layout = html.Div(id='grid', className='container', children=[
     [Input(component_id='l1-slider', component_property='value')]
 )
 def update_l1_textbox_value(input_value):
-    return '{} inches'.format(input_value)
+    return 'L1 = {} inches'.format(input_value)
 
 
 @app.callback(
@@ -416,11 +438,11 @@ def update_l1_textbox_value(input_value):
     [Input(component_id='l2-slider', component_property='value')]
 )
 def update_l2_textbox_value(input_value):
-    return '{} inches'.format(input_value)
+    return 'L2 = {} inches'.format(input_value)
 
 
 @app.callback(
-    [Output(component_id='store-contents', component_property='children'),
+    [Output(component_id='connection-3d-visualization', component_property='figure'),
      Output('local', 'data')],
     [Input('input-button', 'n_clicks')],
     [State('assembly-input-field', 'value')]
@@ -447,52 +469,10 @@ def load_gusset_assembly(n_clicks, filepath):
                        'V_b': V_b,
                        'H_b': H_b,
                        'M_b': M_b}
-        return gusset_dict, gusset_dict
-
-
-hc_forces = {'V_c': 181.14828930285879, 'H_c': 94.52172458426533, 'M_c': -112.39593118392548, 'V_b': 135.76756803921745, 'H_b': 149.53634097624172, 'M_b': 108.85293208805035}
-
-
-@app.callback(
-    [Output('beam-axial-tension-indicator', 'color'),
-     Output('beam-axial-tension-circle-value', 'children')],
-    [Input('l1-slider', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
-    )
-def get_axial_tension_dcr(l1):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    p_u = hc_forces['V_b']
-    thickness = 1.
-    phi_Pn = 0.9 * 50 * l1 * thickness
-    at_dcr = p_u / phi_Pn
-    if at_dcr > 0.95:
-        color = 'red'
-    elif at_dcr > 0.85:
-        color = 'yellow'
-    else:
-        color = 'green'
-    return color, "{:.0%}".format(at_dcr)
-
-@app.callback(
-    Output('beam-axial-compression-indicator', 'value'),
-    [Input('l1-slider', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
-    )
-def get_axial_tension_dcr(l1):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    p_u = hc_forces['V_b']
-    thickness = 1.
-    phi_Pn = 0.9 * 50 * l1 * thickness
-    at_dcr = p_u / phi_Pn
-    return at_dcr
+        meshes = gusset_node.to_meshes()
+        fig = go.Figure(data=meshes)
+        fig.update_layout(scene_aspectmode='data')
+        return fig, gusset_dict
 
 @app.callback(
      Output('plotly-2d-graph', 'figure'),
@@ -503,6 +483,8 @@ def get_axial_tension_dcr(l1):
 )
 def update_2d_plot(l1, l2, ts, gusset_data):
     if ts is None:
+        raise PreventUpdate
+    if gusset_data is None:
         raise PreventUpdate
     data = gusset_data or {}
     gusset_lines = []
@@ -612,6 +594,220 @@ def update_2d_plot(l1, l2, ts, gusset_data):
     figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
     figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
     return figure
+
+#  ----------------------------------------------------------------------------
+#  Calculator Callbacks
+#  ----------------------------------------------------------------------------
+
+hc_forces = {'V_c': 181.14828930285879, 'H_c': 94.52172458426533, 'M_c': -112.39593118392548, 'V_b': 135.76756803921745, 'H_b': 149.53634097624172, 'M_b': 108.85293208805035}
+@app.callback(
+    [Output('beam-axial-tension-indicator', 'color'),
+     Output('beam-axial-tension-circle-value', 'children')],
+    [Input('l1-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_axial_tension_dcr(l1, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    p_u = hc_forces['V_b']
+    phi_Pn = 0.9 * 50 * l1 * thickness
+    at_dcr = p_u / phi_Pn
+    if at_dcr > 0.95:
+        color = 'red'
+    elif at_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(at_dcr)
+
+
+@app.callback(
+    [Output('column-axial-tension-indicator', 'color'),
+     Output('column-axial-tension-circle-value', 'children')],
+    [Input('l2-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_axial_tension_dcr(l2, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    p_u = hc_forces['H_c']
+    phi_Pn = 0.9 * 50 * l2 * thickness
+    at_dcr = p_u / phi_Pn
+    if at_dcr > 0.95:
+        color = 'red'
+    elif at_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(at_dcr)
+
+
+@app.callback(
+    [Output('beam-moment-indicator', 'color'),
+     Output('beam-moment-circle-value', 'children')],
+    [Input('l1-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_moment_dcr(l1, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    m_u = hc_forces['M_b']
+    Z_gusset = thickness * l1 ** 2.0 / 4
+    phi_Mn = 0.9 * 50 * Z_gusset
+    m_dcr = abs(m_u) / phi_Mn
+    if m_dcr > 0.95:
+        color = 'red'
+    elif m_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(m_dcr)
+
+@app.callback(
+    [Output('column-moment-indicator', 'color'),
+     Output('column-moment-circle-value', 'children')],
+    [Input('l2-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_moment_dcr(l2, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    m_u = hc_forces['M_c']
+    Z_gusset = thickness * l2 ** 2.0 / 4
+    phi_Mn = 0.9 * 50 * Z_gusset
+    m_dcr = abs(m_u) / phi_Mn
+    if m_dcr > 0.95:
+        color = 'red'
+    elif m_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(m_dcr)
+
+@app.callback(
+    [Output('beam-shear-indicator', 'color'),
+     Output('beam-shear-circle-value', 'children')],
+    [Input('l1-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_in_plane_shear_dcr(l1, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    v_u = hc_forces['H_b']
+    A_gusset = thickness * l1
+    phi_Vn = 0.9 * 50 * A_gusset * 0.6
+    v_dcr = abs(v_u) / phi_Vn
+    if v_dcr > 0.95:
+        color = 'red'
+    elif v_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(v_dcr)
+
+@app.callback(
+    [Output('column-shear-indicator', 'color'),
+     Output('column-shear-circle-value', 'children')],
+    [Input('l2-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_in_plane_shear_dcr(l2, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    # p_u = gusset_data['V_b']
+    v_u = hc_forces['V_c']
+    A_gusset = thickness * l2
+    phi_Vn = 0.9 * 50 * A_gusset * 0.6
+    v_dcr = abs(v_u) / phi_Vn
+    if v_dcr > 0.95:
+        color = 'red'
+    elif v_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(v_dcr)
+
+@app.callback(
+    [Output('beam-Von-Mises-indicator', 'color'),
+     Output('beam-Von-Mises-circle-value', 'children')],
+    [Input('l1-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_von_mises_dcr(l1, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    p_u = hc_forces['V_b']
+    v_u = hc_forces['H_b']
+    A_gusset = thickness * l1
+    sigma_p = p_u / A_gusset
+    sigma_v = v_u / A_gusset
+    sigma_vm = (sigma_p ** 2.0 + sigma_v ** 2.0) ** 0.5
+    phi_vm = 0.9 * 50.
+    vm_dcr = sigma_vm / phi_vm
+    if vm_dcr > 0.95:
+        color = 'red'
+    elif vm_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(vm_dcr)
+
+@app.callback(
+    [Output('column-Von-Mises-indicator', 'color'),
+     Output('column-Von-Mises-circle-value', 'children')],
+    [Input('l2-slider', 'value'),
+     Input('gusset-thickness', 'value')]
+    #  Input('local', 'modified_timestamp')],
+    # [State('local', 'data')]
+    )
+def get_von_mises_dcr(l2, thickness):
+    # if ts is None:
+    #     raise PreventUpdate
+    # data = gusset_data or {}
+    p_u = hc_forces['H_c']
+    v_u = hc_forces['V_c']
+    A_gusset = thickness * l2
+    sigma_p = p_u / A_gusset
+    sigma_v = v_u / A_gusset
+    sigma_vm = (sigma_p ** 2.0 + sigma_v ** 2.0) ** 0.5
+    phi_vm = 0.9 * 50.
+    vm_dcr = sigma_vm / phi_vm
+    if vm_dcr > 0.95:
+        color = 'red'
+    elif vm_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(vm_dcr)
+
+
+
 
 
 if __name__ =='__main__':
