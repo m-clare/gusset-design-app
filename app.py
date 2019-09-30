@@ -236,36 +236,91 @@ def build_gusset_parameters():
 
 def build_design_checks():
     return html.Div(id='gusset-design-checks',
-                    children=[generate_dcr_indicators()])
+                    children=[
+                    html.H4('Design Checks'),
+                    dfx.Row(center='xs',
+                        children=[
+                        html.Div(className='row', children=[
+                            html.Div(className='four columns', children=[
+                                html.H6('Beam Interface')
+                                ]),
+                            html.Div(className='eight columns', children=[
+                                generate_beam_dcr_indicators()
+                                ])
+                            ]),
+                        ]),
+                    dfx.Row(center='xs',
+                        children=[
+                        html.Div(className='row', children=[
+                            html.Div(className='four columns', children=[
+                                html.H6('Column Interface')
+                                ]),
+                            html.Div(className='eight columns', children=[
+                                generate_column_dcr_indicators()
+                                ])
+                            ]),
+                        ]),
+                    ])
 
 
-dcr_list = ['axial-tension', 'axial-compression', 'moment', 'in-plane-shear',
-            'out-of-plane-shear', 'Whitmore-section']
+dcr_list = ['axial-tension', 'moment', 'in-plane-shear',
+            'out-of-plane-shear', 'Von-Mises']
 
+dcr_key = {'axial-tension': 'P (+)', 'moment': 'M', 'in-plane-shear': 'V1', 
+           'out-of-plane-shear': 'V2', 'Von-Mises': 'VM'}
 
-def generate_dcr_indicators():
-    bars = [create_dcr_indicator(item) for item in dcr_list]
-    return dfx.Row(children=bars,
+def generate_beam_dcr_indicators():
+    circles = [create_dcr_indicator('beam-' + item) for item in dcr_list]
+    return dfx.Row(children=circles)
+
+def generate_column_dcr_indicators():
+    circles = [create_dcr_indicator('column-' + item) for item in dcr_list]
+    return dfx.Row(children=circles,
                    center='xs')
-
+# def generate_dcr_indicators():
+#     circles = [create_dcr_indicator(item) for item in dcr_list]
+#     return dfx.Row(children=circles,
+#                    center='xs')
 
 def create_dcr_indicator(item):
-    bar = daq.GraduatedBar(
-          id=item + '-indicator',
-          color={'gradient': True, 'ranges': {'green': [0, 85],
-                 'yellow': [85, 95], 'red': [95, 100]}},
-          # showCurrentValue=True,
-          max=100,
-          value=90,
-          vertical=True,
-          step=10,
-          )
-    styled_bar = html.Div(id=item + '-bar-container', style={'margin': '1em'},
-                          children=bar)
-    bar_div = dfx.Col(children=[
-                styled_bar,
-                html.Div(id=item + '-bar-value')])
-    return bar_div
+    id_abbrev = (item).split('-', 1)[1]
+    circle = daq.Indicator(
+             id=item + '-indicator',
+             label=dcr_key[id_abbrev],
+             value=True,
+             color= "#000000"
+             )
+    styled_circle = html.Div(id=item + '-circle-container', style={'margin': '1em'},
+                             children=[circle])
+    circle_div = dfx.Col(children=[
+                    styled_circle,
+                    html.Div(id=item + '-circle-value')
+                    ])
+    return circle_div
+
+# def generate_dcr_indicators():
+#     bars = [create_dcr_indicator(item) for item in dcr_list]
+#     return dfx.Row(children=bars,
+#                    center='xs')
+
+
+# def create_dcr_indicator(item):
+#     bar = daq.GraduatedBar(
+#           id=item + '-indicator',
+#           color={'gradient': True, 'ranges': {'green': [0, 85],
+#                  'yellow': [85, 95], 'red': [95, 100]}},
+#           showCurrentValue=True,
+#           max=100,
+#           value=90,
+#           vertical=True,
+#           step=1,
+#           )
+#     styled_bar = html.Div(id=item + '-bar-container', style={'margin': '1em'},
+#                           children=bar)
+#     bar_div = dfx.Col(children=[
+#                 styled_bar,
+#                 html.Div(id=item + '-bar-value')])
+#     return bar_div
 
 
 def create_default_plotly2d():
@@ -394,11 +449,13 @@ def load_gusset_assembly(n_clicks, filepath):
                        'M_b': M_b}
         return gusset_dict, gusset_dict
 
+
 hc_forces = {'V_c': 181.14828930285879, 'H_c': 94.52172458426533, 'M_c': -112.39593118392548, 'V_b': 135.76756803921745, 'H_b': 149.53634097624172, 'M_b': 108.85293208805035}
 
+
 @app.callback(
-    [Output('axial-tension-indicator', 'value'),
-     Output('axial-tension-bar-value', 'children')],
+    [Output('beam-axial-tension-indicator', 'color'),
+     Output('beam-axial-tension-circle-value', 'children')],
     [Input('l1-slider', 'value')]
     #  Input('local', 'modified_timestamp')],
     # [State('local', 'data')]
@@ -412,10 +469,16 @@ def get_axial_tension_dcr(l1):
     thickness = 1.
     phi_Pn = 0.9 * 50 * l1 * thickness
     at_dcr = p_u / phi_Pn
-    return at_dcr, "{:.0%}".format(at_dcr)
+    if at_dcr > 0.95:
+        color = 'red'
+    elif at_dcr > 0.85:
+        color = 'yellow'
+    else:
+        color = 'green'
+    return color, "{:.0%}".format(at_dcr)
 
 @app.callback(
-    Output('axial-compression-indicator', 'value'),
+    Output('beam-axial-compression-indicator', 'value'),
     [Input('l1-slider', 'value')]
     #  Input('local', 'modified_timestamp')],
     # [State('local', 'data')]
