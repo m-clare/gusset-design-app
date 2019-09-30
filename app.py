@@ -115,34 +115,51 @@ def build_tab(category):
     if category == 'Main':
         return html.Div(className='pretty container', children=[
                     html.Div(className='row', children=[
-                            html.Div(className='six columns', children=[
-                                build_io_panel()
+                                build_assembly_input(),
+                                build_force_input(),
                                 ]),
-                            html.Div(className='six columns', children=[
-                                build_adjustment_panel()
-                                ])
-                            ])
+                    html.Br(),
+                    mui.Divider(),
+                    html.Div(className='row', children=[
+                        build_3d_visualization(),
+                        build_2d_visualization(),
+                        ]),
+                    html.Br(),
+                    mui.Divider(),
+                    html.H4('Design Checks'),
+                    html.Div(className='row', children=[
+                        build_beam_design_checks(),
+                        build_column_design_checks()
+                        ])
                     ])
+
+                    #         html.Div(className='six columns', children=[
+                    #             build_io_panel()
+                    #             ]),
+                    #         html.Div(className='six columns', children=[
+                    #             build_adjustment_panel()
+                    #             ])
+                    #         ])
+                    # ])
     elif category == 'Report':
         return html.Div(className='row', children=[
                     html.Div(className='six columns', children=[html.Div()]),
                     html.Div(className='six columns', children=[html.Div()])
             ])
-        
 
-def build_io_panel():
-    return html.Div(id='io-panel',
-                    style={'justify-content': 'center'},
-                    className='pretty container',
-                    children=[
-                        build_assembly_input(),
-                        html.Br(),
-                        mui.Divider(),
-                        html.Br(),
-                        html.H4('3D Visualization'),
-                        dcc.Graph(id='connection-3d-visualization',
-                                  figure=build_default_3d_visualization()),
-                    ])
+# def build_io_panel():
+#     return html.Div(id='io-panel',
+#                     style={'justify-content': 'center'},
+#                     className='pretty container',
+#                     children=[
+#                         build_assembly_input(),
+#                         html.Br(),
+#                         mui.Divider(),
+#                         html.Br(),
+#                         html.H4('3D Member Visualization'),
+#                         dcc.Graph(id='connection-3d-visualization',
+#                                   figure=build_default_3d_visualization()),
+#                     ])
 
 
 def build_adjustment_panel():
@@ -159,16 +176,25 @@ def build_adjustment_panel():
                         build_design_checks(),
                     ])
 
+def build_3d_visualization():
+    return html.Div(className='six columns', style={'height': '660px'}, children=[
+            html.H4('3D Member Visualization'),
+            dcc.Graph(id='connection-3d-visualization',
+                      figure=build_default_3d_visualization())
+            ])
 
+def build_2d_visualization():
+    return html.Div(className='six columns', style={'height': '660px'}, children=[
+        build_gusset_parameters()
+        ])
 slider_marks = {12: '12', 16: '16', 20: '20', 24: '24', 28: '28',
                 32: '32', 36: '36', 40: '40'}
 
 
 def build_assembly_input():
-    return html.Div(id='assembly',
+    return html.Div(id='assembly', className='six columns',
                     children=[
-                        html.Div(id='load-gusset-assembly',
-                                 className='interior container',
+                        html.Div(id='gusset-assembly',
                                  children=[
                                     html.H4('Assembly'),
                                     dcc.Input(
@@ -184,7 +210,46 @@ def build_assembly_input():
                                     html.Br(),
                                     html.Button('Submit', id='input-button'),
                                     ])
-                        ])
+                                ])
+def build_force_input():
+    return html.Div(id='force-input', className='six columns',
+                    children=[
+                        html.Div(id='force-field',
+                                 children=[
+                                    html.H4('Brace Force'),
+                                    dcc.Input(
+                                        id='force-input-field',
+                                        type='number',
+                                        placeholder='400.0',
+                                        style={'width': '50%'}
+                                        ),
+                                    html.Div(style={'font-variant': 'small-caps'},
+                                             children=[
+                                                'kips (lb-force x 1000)'
+                                            ])
+                                 ])
+                    ])
+# def build_assembly_input():
+#     return html.Div(id='assembly',
+#                     children=[
+#                         html.Div(id='gusset-assembly',
+#                                  className='interior container',
+#                                  children=[
+#                                     html.H4('Assembly'),
+#                                     dcc.Input(
+#                                         id='assembly-input-field',
+#                                         type='text',
+#                                         placeholder='filepath/to/assembly.json',
+#                                         style={'width': '100%'}
+#                                     ),
+#                                     html.Div(style={'font-variant': 'small-caps'},
+#                                              children=[
+#                                                 'Filepath'
+#                                             ]),
+#                                     html.Br(),
+#                                     html.Button('Submit', id='input-button'),
+#                                     ])
+#                         ])
 
 
 def build_gusset_parameters():
@@ -255,35 +320,63 @@ def build_gusset_parameters():
                             ])    
                         ])
 
+def build_beam_design_checks():
+    return html.Div(className='six columns', children=[
+        dfx.Row(center='xs',
+                children=[
+                html.Div(className='row', children=[
+                    html.Div(className='four columns', children=[
+                        html.H6('Beam Interface')
+                        ]),
+                    html.Div(className='eight columns', children=[
+                        generate_beam_dcr_indicators()
+                        ])
+                    ]),
+                ])
+        ])
 
-def build_design_checks():
-    return html.Div(id='gusset-design-checks',
-                    children=[
-                    html.H4('Design Checks'),
-                    html.H5('Brace Force = {} (kips)'.format(400)),
-                    dfx.Row(center='xs',
-                        children=[
-                        html.Div(className='row', children=[
-                            html.Div(className='four columns', children=[
-                                html.H6('Beam Interface')
-                                ]),
-                            html.Div(className='eight columns', children=[
-                                generate_beam_dcr_indicators()
-                                ])
-                            ]),
+def build_column_design_checks():
+    return html.Div(className='six columns', children=[
+        dfx.Row(center='xs',
+                children=[
+                html.Div(className='row', children=[
+                    html.Div(className='four columns', children=[
+                        html.H6('Column Interface')
                         ]),
-                    dfx.Row(center='xs',
-                        children=[
-                        html.Div(className='row', children=[
-                            html.Div(className='four columns', children=[
-                                html.H6('Column Interface')
-                                ]),
-                            html.Div(className='eight columns', children=[
-                                generate_column_dcr_indicators()
-                                ])
-                            ]),
-                        ]),
-                    ])
+                    html.Div(className='eight columns', children=[
+                        generate_column_dcr_indicators()
+                        ])
+                    ]),
+                ])
+        ])
+# def build_design_checks():
+#     return html.Div(id='gusset-design-checks',
+#                     children=[
+#                     html.H4('Design Checks'),
+#                     html.H5('Brace Force = {} (kips)'.format(400)),
+#                     dfx.Row(center='xs',
+#                         children=[
+#                         html.Div(className='row', children=[
+#                             html.Div(className='four columns', children=[
+#                                 html.H6('Beam Interface')
+#                                 ]),
+#                             html.Div(className='eight columns', children=[
+#                                 generate_beam_dcr_indicators()
+#                                 ])
+#                             ]),
+#                         ]),
+#                     dfx.Row(center='xs',
+#                         children=[
+#                         html.Div(className='row', children=[
+#                             html.Div(className='four columns', children=[
+#                                 html.H6('Column Interface')
+#                                 ]),
+#                             html.Div(className='eight columns', children=[
+#                                 generate_column_dcr_indicators()
+#                                 ])
+#                             ]),
+#                         ]),
+#                     ])
 
 
 dcr_list = ['axial-tension', 'moment', 'shear', 'Von-Mises']
@@ -405,7 +498,7 @@ def to_plotly_xy(line):
 app.layout = html.Div(id='grid', className='container', children=[
                 mui.Paper(children=[
                     html.Div(className='row', children=[
-                        html.Div(dcc.Store(id='local', storage_type='local')),
+                        html.Div(dcc.Store(id='local')),
                         html.Div(className='twelve columns',
                                  children=[
                                     html.Div(id='app-container',
@@ -471,7 +564,9 @@ def load_gusset_assembly(n_clicks, filepath):
                        'M_b': M_b}
         meshes = gusset_node.to_meshes()
         fig = go.Figure(data=meshes)
-        fig.update_layout(scene_aspectmode='data')
+        fig.update_layout(scene_aspectmode='data',
+                          height=620,
+                          margin=dict(l=10, t=10, b=10))
         return fig, gusset_dict
 
 @app.callback(

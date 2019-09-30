@@ -13,8 +13,8 @@ h1 {
 
 
 .pretty-container {
-  margin: 8px;
-  padding: 8px;
+  margin: 16px;
+  padding: 16px;
   position: relative;
 }
 
@@ -36,6 +36,6 @@ h1 {
 }*/
 
 #app-container {
-    margin: 16px;
+    margin: 32px;
     position: relative;
 }
