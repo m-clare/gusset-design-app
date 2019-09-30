@@ -132,34 +132,11 @@ def build_tab(category):
                         build_column_design_checks()
                         ])
                     ])
-
-                    #         html.Div(className='six columns', children=[
-                    #             build_io_panel()
-                    #             ]),
-                    #         html.Div(className='six columns', children=[
-                    #             build_adjustment_panel()
-                    #             ])
-                    #         ])
-                    # ])
     elif category == 'Report':
         return html.Div(className='row', children=[
                     html.Div(className='six columns', children=[html.Div()]),
                     html.Div(className='six columns', children=[html.Div()])
             ])
-
-# def build_io_panel():
-#     return html.Div(id='io-panel',
-#                     style={'justify-content': 'center'},
-#                     className='pretty container',
-#                     children=[
-#                         build_assembly_input(),
-#                         html.Br(),
-#                         mui.Divider(),
-#                         html.Br(),
-#                         html.H4('3D Member Visualization'),
-#                         dcc.Graph(id='connection-3d-visualization',
-#                                   figure=build_default_3d_visualization()),
-#                     ])
 
 
 def build_adjustment_panel():
@@ -229,27 +206,6 @@ def build_force_input():
                                             ])
                                  ])
                     ])
-# def build_assembly_input():
-#     return html.Div(id='assembly',
-#                     children=[
-#                         html.Div(id='gusset-assembly',
-#                                  className='interior container',
-#                                  children=[
-#                                     html.H4('Assembly'),
-#                                     dcc.Input(
-#                                         id='assembly-input-field',
-#                                         type='text',
-#                                         placeholder='filepath/to/assembly.json',
-#                                         style={'width': '100%'}
-#                                     ),
-#                                     html.Div(style={'font-variant': 'small-caps'},
-#                                              children=[
-#                                                 'Filepath'
-#                                             ]),
-#                                     html.Br(),
-#                                     html.Button('Submit', id='input-button'),
-#                                     ])
-#                         ])
 
 
 def build_gusset_parameters():
@@ -290,15 +246,19 @@ def build_gusset_parameters():
                         html.Div(className='row', children=[
                             html.Div(className='two columns',
                                      children=[
-                                        daq.NumericInput(
-                                            id='gusset-thickness',
-                                            label='Plate Thickness',
-                                            labelPosition='top',
-                                            value=1.,
-                                            min=0.5,
-                                            max=4
-                                            ),
-                                        html.H6('(in)', style={'justify-content': 'center'})
+                                        dfx.Row(center='xs',
+                                                children=[
+                                                    daq.NumericInput(
+                                                        id='gusset-thickness',
+                                                        label='Plate Thickness',
+                                                        labelPosition='top',
+                                                        value=1.,
+                                                        min=0.5,
+                                                        max=4
+                                                        ),
+                                                    html.Div('inches', style={'justify-content': 'center',
+                                                        'font-variant': 'small-caps'})
+                                        ])
                                      ]),
                             html.Div(className='ten columns',
                                      children=[
@@ -335,6 +295,7 @@ def build_beam_design_checks():
                 ])
         ])
 
+
 def build_column_design_checks():
     return html.Div(className='six columns', children=[
         dfx.Row(center='xs',
@@ -349,52 +310,23 @@ def build_column_design_checks():
                     ]),
                 ])
         ])
-# def build_design_checks():
-#     return html.Div(id='gusset-design-checks',
-#                     children=[
-#                     html.H4('Design Checks'),
-#                     html.H5('Brace Force = {} (kips)'.format(400)),
-#                     dfx.Row(center='xs',
-#                         children=[
-#                         html.Div(className='row', children=[
-#                             html.Div(className='four columns', children=[
-#                                 html.H6('Beam Interface')
-#                                 ]),
-#                             html.Div(className='eight columns', children=[
-#                                 generate_beam_dcr_indicators()
-#                                 ])
-#                             ]),
-#                         ]),
-#                     dfx.Row(center='xs',
-#                         children=[
-#                         html.Div(className='row', children=[
-#                             html.Div(className='four columns', children=[
-#                                 html.H6('Column Interface')
-#                                 ]),
-#                             html.Div(className='eight columns', children=[
-#                                 generate_column_dcr_indicators()
-#                                 ])
-#                             ]),
-#                         ]),
-#                     ])
 
 
 dcr_list = ['axial-tension', 'moment', 'shear', 'Von-Mises']
 
 dcr_key = {'axial-tension': 'P (+)', 'moment': 'M', 'shear': 'V', 'Von-Mises': 'VM'}
 
+
 def generate_beam_dcr_indicators():
     circles = [create_dcr_indicator('beam-' + item) for item in dcr_list]
     return dfx.Row(children=circles)
+
 
 def generate_column_dcr_indicators():
     circles = [create_dcr_indicator('column-' + item) for item in dcr_list]
     return dfx.Row(children=circles,
                    center='xs')
-# def generate_dcr_indicators():
-#     circles = [create_dcr_indicator(item) for item in dcr_list]
-#     return dfx.Row(children=circles,
-#                    center='xs')
+
 
 def create_dcr_indicator(item):
     id_abbrev = (item).split('-', 1)[1]
@@ -411,30 +343,6 @@ def create_dcr_indicator(item):
                     html.Div(id=item + '-circle-value')
                     ])
     return circle_div
-
-# def generate_dcr_indicators():
-#     bars = [create_dcr_indicator(item) for item in dcr_list]
-#     return dfx.Row(children=bars,
-#                    center='xs')
-
-
-# def create_dcr_indicator(item):
-#     bar = daq.GraduatedBar(
-#           id=item + '-indicator',
-#           color={'gradient': True, 'ranges': {'green': [0, 85],
-#                  'yellow': [85, 95], 'red': [95, 100]}},
-#           showCurrentValue=True,
-#           max=100,
-#           value=90,
-#           vertical=True,
-#           step=1,
-#           )
-#     styled_bar = html.Div(id=item + '-bar-container', style={'margin': '1em'},
-#                           children=bar)
-#     bar_div = dfx.Col(children=[
-#                 styled_bar,
-#                 html.Div(id=item + '-bar-value')])
-#     return bar_div
 
 
 def create_default_plotly2d():
@@ -462,20 +370,6 @@ def build_default_3d_visualization():
                          scene_yaxis=dict(range=[0, 100]),
                          scene_zaxis=dict(range=[0, 200]))
     figure.update_layout(scene_aspectmode='manual', scene_aspectratio=dict(x=1, y=1, z=1))
-    # figure.update_xaxes(range=[-10, 10])
-    # figure.update_yaxes(range=[0, 100])
-    # figure.update_zaxes(range=[0, 200])
-    # figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
-    # figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
-    # data= {'x': [-10, 10, -10, 10, -10, 10, -10, 10],
-    #        'y': [0, 0, 100, 100, 0, 0, 100, 100],
-    #        'z': [0, 0, 0, 0, 200, 200, 200, 200],
-    #        }
-    # meshes = GussetNode.to_meshes()
-    # fig = go.Figure(data=[go.Scatter3d(x=data['x'], y=data['y'], z=data['z'], mode='markers',
-    #                 visible=False,
-    #                 marker=dict(opacity=0.0, size=0))])
-    # fig.update_layout(scene_aspectmode='data')
     return figure
 
 #  ----------------------------------------------------------------------------
@@ -494,6 +388,7 @@ def to_plotly_xy(line):
 #  ----------------------------------------------------------------------------
 #  Layout
 #  ----------------------------------------------------------------------------
+
 
 app.layout = html.Div(id='grid', className='container', children=[
                 mui.Paper(children=[
@@ -517,7 +412,7 @@ app.layout = html.Div(id='grid', className='container', children=[
 #  Callbacks
 #  ----------------------------------------------------------------------------
 
-# Slider / Text Values
+
 @app.callback(
     Output(component_id='gusset-l1-value', component_property='children'),
     [Input(component_id='l1-slider', component_property='value')]
@@ -569,6 +464,7 @@ def load_gusset_assembly(n_clicks, filepath, force_value):
                           margin=dict(l=10, t=10, b=10))
         return fig, gusset_dict
 
+
 @app.callback(
      Output('plotly-2d-graph', 'figure'),
      [Input('l1-slider', 'value'),
@@ -605,9 +501,6 @@ def update_2d_plot(l1, l2, ts, gusset_data):
 
     brace_vector.unitize()
     brace_vector.scale(data['connection_length'])
-
-
-    # Brace shoulder lines
     brace_depth = data['brace_depth']
     column_offset = brace_depth * 0.5 + data['offset']
     beam_offset = -(brace_depth * 0.5 + data['offset'])
@@ -694,7 +587,7 @@ def update_2d_plot(l1, l2, ts, gusset_data):
 #  Calculator Callbacks
 #  ----------------------------------------------------------------------------
 
-hc_forces = {'V_c': 181.14828930285879, 'H_c': 94.52172458426533, 'M_c': -112.39593118392548, 'V_b': 135.76756803921745, 'H_b': 149.53634097624172, 'M_b': 108.85293208805035}
+
 @app.callback(
     [Output('beam-axial-tension-indicator', 'color'),
      Output('beam-axial-tension-circle-value', 'children')],
@@ -770,6 +663,7 @@ def get_moment_dcr(l1, thickness, ts, data):
         color = 'green'
     return color, "{:.0%}".format(m_dcr)
 
+
 @app.callback(
     [Output('column-moment-indicator', 'color'),
      Output('column-moment-circle-value', 'children')],
@@ -794,6 +688,7 @@ def get_moment_dcr(l2, thickness, ts, data):
     else:
         color = 'green'
     return color, "{:.0%}".format(m_dcr)
+
 
 @app.callback(
     [Output('beam-shear-indicator', 'color'),
@@ -820,6 +715,7 @@ def get_in_plane_shear_dcr(l1, thickness, ts, data):
         color = 'green'
     return color, "{:.0%}".format(v_dcr)
 
+
 @app.callback(
     [Output('column-shear-indicator', 'color'),
      Output('column-shear-circle-value', 'children')],
@@ -844,6 +740,7 @@ def get_in_plane_shear_dcr(l2, thickness, ts, data):
     else:
         color = 'green'
     return color, "{:.0%}".format(v_dcr)
+
 
 @app.callback(
     [Output('beam-Von-Mises-indicator', 'color'),
@@ -873,6 +770,7 @@ def get_von_mises_dcr(l1, thickness, ts, data):
     else:
         color = 'green'
     return color, "{:.0%}".format(vm_dcr)
+
 
 @app.callback(
     [Output('column-Von-Mises-indicator', 'color'),
@@ -904,8 +802,5 @@ def get_von_mises_dcr(l2, thickness, ts, data):
     return color, "{:.0%}".format(vm_dcr)
 
 
-
-
-
-if __name__ =='__main__':
+if __name__ == '__main__':
     app.run_server(debug=True, port=8050)
