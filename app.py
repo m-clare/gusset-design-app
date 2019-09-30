@@ -538,9 +538,10 @@ def update_l2_textbox_value(input_value):
     [Output(component_id='connection-3d-visualization', component_property='figure'),
      Output('local', 'data')],
     [Input('input-button', 'n_clicks')],
-    [State('assembly-input-field', 'value')]
+    [State('assembly-input-field', 'value'),
+     State('force-input-field', 'value')]
 )
-def load_gusset_assembly(n_clicks, filepath):
+def load_gusset_assembly(n_clicks, filepath, force_value):
     if n_clicks is None:
         raise PreventUpdate
     elif filepath is None:
@@ -549,13 +550,12 @@ def load_gusset_assembly(n_clicks, filepath):
         gusset_node = GussetNode.from_json(filepath)
         gusset = GussetPlate(gusset_node.braces[0], gusset_node.column[0],
                              gusset_node.beams[0], 'i', brace_angle=37.6)
-        V_c, H_c, M_c, V_b, H_b, M_b = gusset.calculate_interface_forces(400.)
+        V_c, H_c, M_c, V_b, H_b, M_b = gusset.calculate_interface_forces(force_value)
         gusset_dict = {'eb': gusset.eb, 'ec': gusset.ec,
                        'offset': gusset.offset,
                        'design_angle': gusset.design_angle,
                        'brace_depth': gusset.get_brace_depth(),
                        'connection_length': gusset.connection_length,
-                       'force': 400.,
                        'V_c': V_c,
                        'H_c': H_c,
                        'M_c': M_c,
@@ -699,16 +699,16 @@ hc_forces = {'V_c': 181.14828930285879, 'H_c': 94.52172458426533, 'M_c': -112.39
     [Output('beam-axial-tension-indicator', 'color'),
      Output('beam-axial-tension-circle-value', 'children')],
     [Input('l1-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_axial_tension_dcr(l1, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    p_u = hc_forces['V_b']
+def get_axial_tension_dcr(l1, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    p_u = data['V_b']
     phi_Pn = 0.9 * 50 * l1 * thickness
     at_dcr = p_u / phi_Pn
     if at_dcr > 0.95:
@@ -724,16 +724,16 @@ def get_axial_tension_dcr(l1, thickness):
     [Output('column-axial-tension-indicator', 'color'),
      Output('column-axial-tension-circle-value', 'children')],
     [Input('l2-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_axial_tension_dcr(l2, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    p_u = hc_forces['H_c']
+def get_axial_tension_dcr(l2, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    p_u = data['H_c']
     phi_Pn = 0.9 * 50 * l2 * thickness
     at_dcr = p_u / phi_Pn
     if at_dcr > 0.95:
@@ -749,16 +749,16 @@ def get_axial_tension_dcr(l2, thickness):
     [Output('beam-moment-indicator', 'color'),
      Output('beam-moment-circle-value', 'children')],
     [Input('l1-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_moment_dcr(l1, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    m_u = hc_forces['M_b']
+def get_moment_dcr(l1, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    m_u = data['M_b']
     Z_gusset = thickness * l1 ** 2.0 / 4
     phi_Mn = 0.9 * 50 * Z_gusset
     m_dcr = abs(m_u) / phi_Mn
@@ -774,16 +774,16 @@ def get_moment_dcr(l1, thickness):
     [Output('column-moment-indicator', 'color'),
      Output('column-moment-circle-value', 'children')],
     [Input('l2-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_moment_dcr(l2, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    m_u = hc_forces['M_c']
+def get_moment_dcr(l2, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    m_u = data['M_c']
     Z_gusset = thickness * l2 ** 2.0 / 4
     phi_Mn = 0.9 * 50 * Z_gusset
     m_dcr = abs(m_u) / phi_Mn
@@ -799,16 +799,16 @@ def get_moment_dcr(l2, thickness):
     [Output('beam-shear-indicator', 'color'),
      Output('beam-shear-circle-value', 'children')],
     [Input('l1-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_in_plane_shear_dcr(l1, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    v_u = hc_forces['H_b']
+def get_in_plane_shear_dcr(l1, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    v_u = data['H_b']
     A_gusset = thickness * l1
     phi_Vn = 0.9 * 50 * A_gusset * 0.6
     v_dcr = abs(v_u) / phi_Vn
@@ -824,16 +824,16 @@ def get_in_plane_shear_dcr(l1, thickness):
     [Output('column-shear-indicator', 'color'),
      Output('column-shear-circle-value', 'children')],
     [Input('l2-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_in_plane_shear_dcr(l2, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    # p_u = gusset_data['V_b']
-    v_u = hc_forces['V_c']
+def get_in_plane_shear_dcr(l2, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    v_u = data['V_c']
     A_gusset = thickness * l2
     phi_Vn = 0.9 * 50 * A_gusset * 0.6
     v_dcr = abs(v_u) / phi_Vn
@@ -849,16 +849,17 @@ def get_in_plane_shear_dcr(l2, thickness):
     [Output('beam-Von-Mises-indicator', 'color'),
      Output('beam-Von-Mises-circle-value', 'children')],
     [Input('l1-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_von_mises_dcr(l1, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    p_u = hc_forces['V_b']
-    v_u = hc_forces['H_b']
+def get_von_mises_dcr(l1, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    p_u = data['V_b']
+    v_u = data['H_b']
     A_gusset = thickness * l1
     sigma_p = p_u / A_gusset
     sigma_v = v_u / A_gusset
@@ -877,16 +878,17 @@ def get_von_mises_dcr(l1, thickness):
     [Output('column-Von-Mises-indicator', 'color'),
      Output('column-Von-Mises-circle-value', 'children')],
     [Input('l2-slider', 'value'),
-     Input('gusset-thickness', 'value')]
-    #  Input('local', 'modified_timestamp')],
-    # [State('local', 'data')]
+     Input('gusset-thickness', 'value'),
+     Input('local', 'modified_timestamp')],
+    [State('local', 'data')]
     )
-def get_von_mises_dcr(l2, thickness):
-    # if ts is None:
-    #     raise PreventUpdate
-    # data = gusset_data or {}
-    p_u = hc_forces['H_c']
-    v_u = hc_forces['V_c']
+def get_von_mises_dcr(l2, thickness, ts, data):
+    if ts is None:
+        raise PreventUpdate
+    if data is None:
+        raise PreventUpdate
+    p_u = data['H_c']
+    v_u = data['V_c']
     A_gusset = thickness * l2
     sigma_p = p_u / A_gusset
     sigma_v = v_u / A_gusset
