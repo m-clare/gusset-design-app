@@ -39,3 +39,22 @@ h1 {
     margin: 32px;
     position: relative;
 }
+
+#l2-slider .rc-slider-track {
+    background-color: #2000FF;
+}
+#l1-slider .rc-slider-track {
+    background-color: #ED4024;
+}
+
+.rc-slider-dot {
+    border-color: #E9E9E9;
+}
+
+.rc-slider-dot-active {
+    border-color: #000000;
+}
+
+.rc-slider-handle {
+    border-color: #000000;
+}

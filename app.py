@@ -36,8 +36,6 @@ from compas.geometry import translate_points
 from compas.geometry import offset_line
 from compas.geometry import intersection_line_line_xy
 from compas.geometry import distance_point_point
-from compas.geometry.transformations.transformations import mirror_point_line
-from compas.geometry.xforms.transformation import Transformation
 
 app = dash.Dash(
     __name__,
@@ -46,16 +44,12 @@ app = dash.Dash(
     )
 
 server = app.server
-# app.config['suppress_callback_exceptions'] = True
 app.config.suppress_callback_exceptions = True
 
 #  ----------------------------------------------------------------------------
-#  Components
+#  Layout Components
 #  ----------------------------------------------------------------------------
 
-test = GussetNode.from_json('../gusset_design/examples/sample_node.json')
-# initialize gusset node
-gusset_node = None
 
 def build_app_banner():
     return html.Div(
@@ -153,6 +147,7 @@ def build_adjustment_panel():
                         build_design_checks(),
                     ])
 
+
 def build_3d_visualization():
     return html.Div(className='six columns', style={'height': '660px'}, children=[
             html.H4('3D Member Visualization'),
@@ -160,10 +155,13 @@ def build_3d_visualization():
                       figure=build_default_3d_visualization())
             ])
 
+
 def build_2d_visualization():
     return html.Div(className='six columns', style={'height': '660px'}, children=[
         build_gusset_parameters()
         ])
+
+
 slider_marks = {12: '12', 16: '16', 20: '20', 24: '24', 28: '28',
                 32: '32', 36: '36', 40: '40'}
 
@@ -188,6 +186,8 @@ def build_assembly_input():
                                     html.Button('Submit', id='input-button'),
                                     ])
                                 ])
+
+
 def build_force_input():
     return html.Div(id='force-input', className='six columns',
                     children=[
@@ -198,9 +198,11 @@ def build_force_input():
                                         id='force-input-field',
                                         type='number',
                                         placeholder='400.0',
-                                        style={'width': '50%'}
+                                        style={'width': '50%',
+                                               'border-color': '#9932CC'}
                                         ),
-                                    html.Div(style={'font-variant': 'small-caps'},
+                                    html.Div(style={'font-variant': 'small-caps',
+                                                    'color': '#9932CC'},
                                              children=[
                                                 'kips (lb-force x 1000)'
                                             ])
@@ -258,8 +260,8 @@ def build_gusset_parameters():
                                                         ),
                                                     html.Div('inches', style={'justify-content': 'center',
                                                         'font-variant': 'small-caps'})
-                                        ])
-                                     ]),
+                                                ])
+                                        ]),
                             html.Div(className='ten columns',
                                      children=[
                                         html.Div(style={'margin': '1em'},
@@ -276,23 +278,24 @@ def build_gusset_parameters():
                                         html.Div(id='gusset-l1-value',
                                                  style={'font-variant': 'small-caps',
                                                         'justify-content': 'left'}),
-                                                 ])
-                            ])    
+                                        ]),
+                                ])
                         ])
+
 
 def build_beam_design_checks():
     return html.Div(className='six columns', children=[
         dfx.Row(center='xs',
                 children=[
-                html.Div(className='row', children=[
-                    html.Div(className='four columns', children=[
-                        html.H6('Beam Interface')
+                    html.Div(className='row', children=[
+                        html.Div(className='four columns', children=[
+                            html.H6('Beam Interface')
+                            ]),
+                        html.Div(className='eight columns', children=[
+                            generate_beam_dcr_indicators()
+                            ])
                         ]),
-                    html.Div(className='eight columns', children=[
-                        generate_beam_dcr_indicators()
-                        ])
-                    ]),
-                ])
+                    ])
         ])
 
 
@@ -300,21 +303,22 @@ def build_column_design_checks():
     return html.Div(className='six columns', children=[
         dfx.Row(center='xs',
                 children=[
-                html.Div(className='row', children=[
-                    html.Div(className='four columns', children=[
-                        html.H6('Column Interface')
+                    html.Div(className='row', children=[
+                        html.Div(className='four columns', children=[
+                            html.H6('Column Interface')
+                            ]),
+                        html.Div(className='eight columns', children=[
+                            generate_column_dcr_indicators()
+                            ])
                         ]),
-                    html.Div(className='eight columns', children=[
-                        generate_column_dcr_indicators()
-                        ])
-                    ]),
-                ])
+                    ])
         ])
 
 
 dcr_list = ['axial-tension', 'moment', 'shear', 'Von-Mises']
 
-dcr_key = {'axial-tension': 'P (+)', 'moment': 'M', 'shear': 'V', 'Von-Mises': 'VM'}
+dcr_key = {'axial-tension': 'P (+)', 'moment': 'M',
+           'shear': 'V', 'Von-Mises': 'VM'}
 
 
 def generate_beam_dcr_indicators():
@@ -334,9 +338,10 @@ def create_dcr_indicator(item):
              id=item + '-indicator',
              label=dcr_key[id_abbrev],
              value=True,
-             color= "#000000"
+             color="#000000"
              )
-    styled_circle = html.Div(id=item + '-circle-container', style={'margin': '1em', 'width': '30px'},
+    styled_circle = html.Div(id=item + '-circle-container',
+                             style={'margin': '1em', 'width': '30px'},
                              children=[circle])
     circle_div = dfx.Col(children=[
                     styled_circle,
@@ -346,30 +351,31 @@ def create_dcr_indicator(item):
 
 
 def create_default_plotly2d():
-    figure = go.Figure(data={'x': [0], 'y': [0]})
+    figure = go.Figure(data={'x': [0], 'y': [0],
+                             'marker': {'color': '#FFFFFF'}})
     figure.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1),
                          paper_bgcolor='rgba(0,0,0,0)',
                          plot_bgcolor='rgba(0,0,0,0)',
                          showlegend=False,
                          margin=dict(l=10, t=10, b=10))
-    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
-    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
+    figure.update_xaxes(range=[0, 80], showgrid=False,
+                        zeroline=False, showticklabels=False)
+    figure.update_yaxes(range=[0, 80], showgrid=False,
+                        zeroline=False, showticklabels=False)
     return figure
-
-
-def build_gusset_node_visualization():
-    pass
 
 
 def build_default_3d_visualization():
 
-    figure = go.Figure(data=go.Scatter3d({'x': [0], 'y': [0], 'z': [0]}, visible=False))
+    figure = go.Figure(data=go.Scatter3d({'x': [0], 'y': [0], 'z': [0]},
+                       visible=False))
     figure.update_layout(showlegend=False,
                          margin=dict(l=10, t=10, b=10),
                          scene_xaxis=dict(range=[-10, 10]),
                          scene_yaxis=dict(range=[0, 100]),
                          scene_zaxis=dict(range=[0, 200]))
-    figure.update_layout(scene_aspectmode='manual', scene_aspectratio=dict(x=1, y=1, z=1))
+    figure.update_layout(scene_aspectmode='manual',
+                         scene_aspectratio=dict(x=1, y=1, z=1))
     return figure
 
 #  ----------------------------------------------------------------------------
@@ -440,6 +446,8 @@ def load_gusset_assembly(n_clicks, filepath, force_value):
     if n_clicks is None:
         raise PreventUpdate
     elif filepath is None:
+        raise PreventUpdate
+    elif force_value is None:
         raise PreventUpdate
     else:
         gusset_node = GussetNode.from_json(filepath)
@@ -527,28 +535,29 @@ def update_2d_plot(l1, l2, ts, gusset_data):
         line_segment = Line(brace_pt, pt_mirrored)
         pt_CL = intersection_line_line_xy(line_segment, brace_CL)
         pt_distance = distance_point_point(work_point, pt_CL)
-        return line_segment, pt_distance, offset_brace, offset_brace_signed
+        return pt_distance, line_segment, offset_brace, offset_brace_signed
 
-    column_line, col_dist, os_brace_column, os_column = get_brace_points(column_offset, column_line,
-                                                                         brace_CL, brace_vector, offset_dir='+')
-    beam_line, beam_dist, os_brace_beam, os_beam = get_brace_points(beam_offset, beam_line,
-                                            brace_CL, brace_vector, offset_dir='-')
+    column_gls = get_brace_points(column_offset, column_line, brace_CL,
+                                  brace_vector, offset_dir='+')
 
-    gusset_lines.append(os_brace_column)
-    gusset_lines.append(os_brace_beam)
-    gusset_lines.append(os_column)
-    gusset_lines.append(os_beam)
-    gusset_lines.append(column_line)
-    gusset_lines.append(beam_line)
+    beam_gls = get_brace_points(beam_offset, beam_line, brace_CL,
+                                brace_vector, offset_dir='-')
 
-    if col_dist > beam_dist:
+    gusset_lines.append(column_gls[1])
+    gusset_lines.append(beam_gls[1])
+    gusset_lines.append(column_gls[2])
+    gusset_lines.append(beam_gls[2])
+    gusset_lines.append(column_gls[3])
+    gusset_lines.append(beam_gls[3])
+
+    if column_gls[0] > beam_gls[0]:
         pt3 = column_line[1]
         pt4 = column_line[0]
     else:
         pt3 = beam_line[0]
         pt4 = beam_line[1]
 
-    # set check to make sure gusset is non concave (force points to line
+    # TODO: set check to make sure gusset is non concave (force points to line
     # between pt2 and pt5)
     # Points list to point
     pt0 = Point(pt0[0], pt0[1], pt0[2])
@@ -571,7 +580,9 @@ def update_2d_plot(l1, l2, ts, gusset_data):
     gusset_lines_styled = [plotly_styled]
     for line in gusset_lines:
         line_formatted = to_plotly_xy(line)
-        line_info = PlotlyLineXY.from_geometry(line_formatted, line={'color': 'gray', 'dash': 'dash'})
+        line_info = PlotlyLineXY.from_geometry(line_formatted,
+                                               line={'color': 'gray',
+                                                     'dash': 'dash'})
         gusset_lines_styled.append(line_info)
     figure = go.Figure(data=gusset_lines_styled)
     figure.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1),
@@ -579,8 +590,10 @@ def update_2d_plot(l1, l2, ts, gusset_data):
                          plot_bgcolor='rgba(0,0,0,0)',
                          showlegend=False,
                          margin=dict(l=10, t=10, b=10))
-    figure.update_xaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
-    figure.update_yaxes(range=[0, 80], showgrid=False, zeroline=False, showticklabels=False)
+    figure.update_xaxes(range=[0, 80], showgrid=False,
+                        zeroline=False, showticklabels=False)
+    figure.update_yaxes(range=[0, 80], showgrid=False,
+                        zeroline=False, showticklabels=False)
     return figure
 
 #  ----------------------------------------------------------------------------
