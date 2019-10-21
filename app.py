@@ -36,6 +36,8 @@ from compas.geometry import translate_points
 from compas.geometry import offset_line
 from compas.geometry import intersection_line_line_xy
 from compas.geometry import distance_point_point
+from compas.geometry.transformations.transformations import mirror_point_line
+from compas.geometry.xforms.transformation import Transformation
 
 app = dash.Dash(
     __name__,
