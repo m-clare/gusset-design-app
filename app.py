@@ -36,8 +36,8 @@ from compas.geometry import translate_points
 from compas.geometry import offset_line
 from compas.geometry import intersection_line_line_xy
 from compas.geometry import distance_point_point
-from compas.geometry.transformations.transformations import mirror_point_line
-from compas.geometry.xforms.transformation import Transformation
+from compas.geometry import mirror_points_line
+from compas.geometry import Transformation
 
 app = dash.Dash(
     __name__,
@@ -46,7 +46,6 @@ app = dash.Dash(
     )
 
 server = app.server
-# app.config['suppress_callback_exceptions'] = True
 app.config.suppress_callback_exceptions = True
 
 #  ----------------------------------------------------------------------------
@@ -357,10 +356,6 @@ def create_default_plotly2d():
     return figure
 
 
-def build_gusset_node_visualization():
-    pass
-
-
 def build_default_3d_visualization():
 
     figure = go.Figure(data=go.Scatter3d({'x': [0], 'y': [0], 'z': [0]}, visible=False))
@@ -444,7 +439,7 @@ def load_gusset_assembly(n_clicks, filepath, force_value):
     else:
         gusset_node = GussetNode.from_json(filepath)
         gusset = GussetPlate(gusset_node.braces[0], gusset_node.column[0],
-                             gusset_node.beams[0], 'i', brace_angle=37.6)
+                             gusset_node.beams[0], 'i', brace_angle=37)
         V_c, H_c, M_c, V_b, H_b, M_b = gusset.calculate_interface_forces(force_value)
         gusset_dict = {'eb': gusset.eb, 'ec': gusset.ec,
                        'offset': gusset.offset,
@@ -511,6 +506,7 @@ def update_2d_plot(l1, l2, ts, gusset_data):
     gusset_lines.append(beam_line)
 
     def get_brace_points(offset_value, offset_member,
+
                          brace_CL, brace_vector, offset_dir='+'):
         offset_brace = offset_line(brace_CL, offset_value)
         if offset_dir == '+':
@@ -523,7 +519,7 @@ def update_2d_plot(l1, l2, ts, gusset_data):
         brace_member_int = intersection_line_line_xy(offset_brace,
                                                      offset_member)
         brace_pt = translate_points_xy([brace_member_int], brace_vector)[0]
-        pt_mirrored = mirror_point_line(brace_pt, brace_CL)
+        pt_mirrored = mirror_points_line([brace_pt], brace_CL)[0]
         line_segment = Line(brace_pt, pt_mirrored)
         pt_CL = intersection_line_line_xy(line_segment, brace_CL)
         pt_distance = distance_point_point(work_point, pt_CL)
@@ -567,6 +563,7 @@ def update_2d_plot(l1, l2, ts, gusset_data):
         x.append(pt[0])
         y.append(pt[1])
     gusset_outline = {'x': x, 'y': y}
+    print(gusset_outline)
     plotly_styled = PlotlyLineXY.from_geometry(gusset_outline)
     gusset_lines_styled = [plotly_styled]
     for line in gusset_lines:
