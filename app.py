@@ -52,10 +52,6 @@ app.config.suppress_callback_exceptions = True
 #  Components
 #  ----------------------------------------------------------------------------
 
-test = GussetNode.from_json('../gusset_design/examples/sample_node.json')
-# initialize gusset node
-gusset_node = None
-
 def build_app_banner():
     return html.Div(
         id='banner',
@@ -69,19 +65,6 @@ def build_app_banner():
             )
         ]
     )
-
-
-def build_main_app():
-    return html.Div(id='main-app', children=[
-                html.Div(className='row', children=[
-                    html.Div(className='six columns', children=[
-                        build_io_panel()
-                        ]),
-                    html.Div(className='six columns', children=[
-                        dcc.Graph(figure=generate_visualization(test))
-                        ])
-                    ])
-                ])
 
 
 def build_tabs():
@@ -276,7 +259,7 @@ def build_gusset_parameters():
                                                  style={'font-variant': 'small-caps',
                                                         'justify-content': 'left'}),
                                                  ])
-                            ])    
+                            ])
                         ])
 
 def build_beam_design_checks():
@@ -513,7 +496,7 @@ def update_2d_plot(l1, l2, ts, gusset_data):
             offset_brace_signed = offset_line(brace_CL, offset_value - data['offset'])
         elif offset_dir == '-':
             offset_brace_signed = offset_line(brace_CL, offset_value + data['offset'])
-        else: 
+        else:
             raise ValueError
 
         brace_member_int = intersection_line_line_xy(offset_brace,
@@ -593,7 +576,7 @@ def update_2d_plot(l1, l2, ts, gusset_data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_axial_tension_dcr(l1, thickness, ts, data):
+def get_l1_axial_tension_dcr(l1, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
@@ -618,7 +601,7 @@ def get_axial_tension_dcr(l1, thickness, ts, data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_axial_tension_dcr(l2, thickness, ts, data):
+def get_l2_axial_tension_dcr(l2, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
@@ -643,7 +626,7 @@ def get_axial_tension_dcr(l2, thickness, ts, data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_moment_dcr(l1, thickness, ts, data):
+def get_l1_moment_dcr(l1, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
@@ -669,7 +652,7 @@ def get_moment_dcr(l1, thickness, ts, data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_moment_dcr(l2, thickness, ts, data):
+def get_l2_moment_dcr(l2, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
@@ -695,7 +678,7 @@ def get_moment_dcr(l2, thickness, ts, data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_in_plane_shear_dcr(l1, thickness, ts, data):
+def get_l1_in_plane_shear_dcr(l1, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
@@ -721,7 +704,7 @@ def get_in_plane_shear_dcr(l1, thickness, ts, data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_in_plane_shear_dcr(l2, thickness, ts, data):
+def get_l2_in_plane_shear_dcr(l2, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
@@ -747,7 +730,7 @@ def get_in_plane_shear_dcr(l2, thickness, ts, data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_von_mises_dcr(l1, thickness, ts, data):
+def get_l1_von_mises_dcr(l1, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
@@ -777,7 +760,7 @@ def get_von_mises_dcr(l1, thickness, ts, data):
      Input('local', 'modified_timestamp')],
     [State('local', 'data')]
     )
-def get_von_mises_dcr(l2, thickness, ts, data):
+def get_l2_von_mises_dcr(l2, thickness, ts, data):
     if ts is None:
         raise PreventUpdate
     if data is None:
