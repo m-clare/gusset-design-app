@@ -419,10 +419,15 @@ def load_gusset_assembly(n_clicks, filepath, force_value):
         raise PreventUpdate
     elif filepath is None:
         raise PreventUpdate
+    elif force_value is None:
+        raise PreventUpdate
     else:
         gusset_node = GussetNode.from_json(filepath)
+        # TODO: Add handling for non Q1 gussets - (need to create workplane given beam/column/brace)
+        # Gusset angle needs to be passed some other way
+        brace = gusset_node.braces[0]
         gusset = GussetPlate(gusset_node.braces[0], gusset_node.column[0],
-                             gusset_node.beams[0], 'i', brace_angle=37)
+                             gusset_node.beams[0], 'i', brace_angle=brace.brace_angle)
         V_c, H_c, M_c, V_b, H_b, M_b = gusset.calculate_interface_forces(force_value)
         gusset_dict = {'eb': gusset.eb, 'ec': gusset.ec,
                        'offset': gusset.offset,
